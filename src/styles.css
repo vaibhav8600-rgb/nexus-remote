@@ -1,0 +1,699 @@
+/*
+ * Apple's design language, from the Human Interface Guidelines: the system
+ * font, iOS system colours for light and dark, inset grouped lists, bars in
+ * a translucent material, and a 44pt minimum touch target throughout.
+ *
+ * The theme is data-theme on <html>, set by App from Settings > Theme:
+ * Automatic follows the phone, Light and Dark override it.
+ */
+
+:root,
+:root[data-theme='light'] {
+  color-scheme: light;
+  --bg: #f2f2f7; /* systemGroupedBackground */
+  --cell: #ffffff; /* secondarySystemGroupedBackground */
+  --cell-pressed: #d1d1d6;
+  --elevated: #ffffff;
+  --label: #000000;
+  --secondary: rgba(60, 60, 67, 0.6);
+  --tertiary: rgba(60, 60, 67, 0.3);
+  --separator: rgba(60, 60, 67, 0.29);
+  --fill: rgba(120, 120, 128, 0.2);
+  --fill-2: rgba(120, 120, 128, 0.16);
+  --fill-3: rgba(118, 118, 128, 0.12);
+  --blue: #007aff;
+  --green: #34c759;
+  --orange: #ff9500;
+  --red: #ff3b30;
+  --material: rgba(249, 249, 249, 0.8);
+  --segment: #ffffff;
+  --shadow: 0 3px 8px rgba(0, 0, 0, 0.12), 0 3px 1px rgba(0, 0, 0, 0.04);
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --bg: #000000;
+  --cell: #1c1c1e;
+  --cell-pressed: #3a3a3c;
+  --elevated: #2c2c2e;
+  --label: #ffffff;
+  --secondary: rgba(235, 235, 245, 0.6);
+  --tertiary: rgba(235, 235, 245, 0.3);
+  --separator: rgba(84, 84, 88, 0.65);
+  --fill: rgba(120, 120, 128, 0.36);
+  --fill-2: rgba(120, 120, 128, 0.32);
+  --fill-3: rgba(118, 118, 128, 0.24);
+  --blue: #0a84ff;
+  --green: #30d158;
+  --orange: #ff9f0a;
+  --red: #ff453a;
+  --material: rgba(29, 29, 31, 0.78);
+  --segment: #636366;
+  --shadow: 0 3px 8px rgba(0, 0, 0, 0.5);
+}
+
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--bg);
+  color: var(--label);
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', system-ui, 'Helvetica Neue', 'Segoe UI', Roboto, sans-serif;
+  font-size: 17px;
+  line-height: 1.29;
+  letter-spacing: -0.02em;
+  -webkit-font-smoothing: antialiased;
+  -webkit-text-size-adjust: 100%;
+  overscroll-behavior: none;
+  transition: background-color 0.25s;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+  color: inherit;
+  letter-spacing: inherit;
+}
+
+button {
+  border: 0;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+}
+button:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--blue) 60%, transparent);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+  }
+}
+
+/* ---- layout and bars --------------------------------------------------- */
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.nav-bar {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  padding: env(safe-area-inset-top) max(16px, env(safe-area-inset-right)) 8px max(16px, env(safe-area-inset-left));
+  background: var(--material);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  backdrop-filter: saturate(180%) blur(20px);
+  border-bottom: 0.5px solid var(--separator);
+}
+.nav-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 44px;
+}
+.nav-button {
+  color: var(--blue);
+  font-size: 17px;
+  min-height: 44px;
+  padding: 0 4px;
+}
+.nav-button:active {
+  opacity: 0.3;
+}
+.large-title {
+  margin: 0;
+  font-size: 34px;
+  line-height: 41px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+.status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 15px;
+  color: var(--secondary);
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.status-dot {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--tertiary);
+}
+.status.ok .status-dot {
+  background: var(--green);
+}
+.status.warn .status-dot {
+  background: var(--orange);
+}
+.badge {
+  flex: none;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 6px;
+  background: var(--fill-3);
+  color: var(--label);
+}
+.banner {
+  margin: 8px 0 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--orange) 14%, transparent);
+  font-size: 15px;
+}
+.banner.error {
+  background: color-mix(in srgb, var(--red) 14%, transparent);
+  color: var(--red);
+}
+
+.content {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 8px max(16px, env(safe-area-inset-right)) 24px max(16px, env(safe-area-inset-left));
+}
+.content.fill {
+  display: flex;
+  overflow: hidden;
+  padding-bottom: 12px;
+}
+
+.tab-bar {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  padding: 0 env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  background: var(--material);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  backdrop-filter: saturate(180%) blur(20px);
+  border-top: 0.5px solid var(--separator);
+}
+.tab-bar button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 7px 0 5px;
+  min-height: 49px;
+  color: var(--secondary);
+}
+.tab-bar button.selected {
+  color: var(--blue);
+}
+.tab-icon {
+  font-size: 26px;
+  line-height: 0;
+}
+.tab-label {
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+}
+
+/* ---- inset grouped lists ----------------------------------------------- */
+.section {
+  margin: 0 0 32px;
+}
+.section-header {
+  margin: 0 16px 7px;
+  font-size: 13px;
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: 0;
+  color: var(--secondary);
+}
+.section-footer {
+  margin: 7px 16px 0;
+  font-size: 13px;
+  line-height: 18px;
+  letter-spacing: 0;
+  color: var(--secondary);
+}
+.group {
+  background: var(--cell);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.group > * + * {
+  position: relative;
+}
+/* Hairline between cells, inset from the leading edge like UITableView. */
+.group > * + *::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 16px;
+  right: 0;
+  height: 0.5px;
+  background: var(--separator);
+}
+.cell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 44px;
+  padding: 11px 16px;
+  width: 100%;
+  text-align: left;
+}
+.cell.stack {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+}
+.cell-label {
+  flex: 1;
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+.cell-label.secondary,
+.cell-value {
+  color: var(--secondary);
+}
+button.cell:active:not(:disabled) {
+  background: var(--cell-pressed);
+}
+.cell.action {
+  color: var(--blue);
+}
+.cell.action.destructive {
+  color: var(--red);
+}
+
+/* ---- controls ---------------------------------------------------------- */
+.switch {
+  appearance: none;
+  -webkit-appearance: none;
+  flex: none;
+  position: relative;
+  width: 51px;
+  height: 31px;
+  margin: 0;
+  border-radius: 16px;
+  background: var(--fill);
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+.switch::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 27px;
+  height: 27px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: var(--shadow);
+  transition: transform 0.2s cubic-bezier(0.3, 0.7, 0.4, 1);
+}
+.switch:checked {
+  background: var(--green);
+}
+.switch:checked::after {
+  transform: translateX(20px);
+}
+
+.segmented {
+  flex: none;
+  display: flex;
+  padding: 2px;
+  border-radius: 9px;
+  background: var(--fill-3);
+}
+.segmented button {
+  min-height: 28px;
+  padding: 0 12px;
+  border-radius: 7px;
+  font-size: 13px;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+.segmented button.selected {
+  background: var(--segment);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.12), 0 0 0 0.5px rgba(0, 0, 0, 0.04);
+  font-weight: 600;
+}
+
+.slider {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 100%;
+  height: 28px;
+  margin: 0;
+  background: transparent;
+}
+.slider::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: 2px;
+  background: linear-gradient(to right, var(--blue) var(--pct), var(--fill) var(--pct));
+}
+.slider::-moz-range-track {
+  height: 4px;
+  border-radius: 2px;
+  background: linear-gradient(to right, var(--blue) var(--pct), var(--fill) var(--pct));
+}
+.slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 28px;
+  height: 28px;
+  margin-top: -12px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: var(--shadow), 0 0 0 0.5px rgba(0, 0, 0, 0.04);
+}
+.slider::-moz-range-thumb {
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: var(--shadow);
+}
+
+.filled {
+  min-height: 44px;
+  padding: 0 20px;
+  border-radius: 12px;
+  background: var(--blue);
+  color: #fff;
+  font-weight: 600;
+}
+.filled.small {
+  min-height: 34px;
+  padding: 0 16px;
+  border-radius: 17px;
+  font-size: 15px;
+}
+.filled:active:not(:disabled) {
+  opacity: 0.7;
+}
+.text-button {
+  color: var(--blue);
+  min-height: 44px;
+}
+.text-button.destructive {
+  color: var(--red);
+}
+.text-button:active {
+  opacity: 0.3;
+}
+
+.field {
+  display: block;
+  width: 100%;
+  border: 0;
+  padding: 11px 16px;
+  background: transparent;
+  resize: none;
+  outline: none;
+}
+.field::placeholder {
+  color: var(--tertiary);
+}
+.progress {
+  flex: 1;
+  appearance: none;
+  -webkit-appearance: none;
+  height: 4px;
+  border: 0;
+  border-radius: 2px;
+  background: var(--fill);
+  overflow: hidden;
+}
+.progress::-webkit-progress-bar {
+  background: var(--fill);
+}
+.progress::-webkit-progress-value {
+  background: var(--blue);
+}
+.progress::-moz-progress-bar {
+  background: var(--blue);
+}
+
+/* Capsules that tint when armed and fill when locked: sticky modifiers. */
+.mods {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+}
+.pill {
+  flex: 1;
+  min-height: 36px;
+  padding: 0 8px;
+  border-radius: 18px;
+  background: var(--fill-3);
+  font-size: 15px;
+  font-weight: 500;
+  white-space: nowrap;
+  transition: background-color 0.15s, color 0.15s;
+}
+.pill.armed {
+  background: color-mix(in srgb, var(--blue) 18%, transparent);
+  color: var(--blue);
+}
+.pill.locked {
+  background: var(--blue);
+  color: #fff;
+}
+
+.keycap {
+  min-height: 44px;
+  min-width: 48px;
+  padding: 0 10px;
+  border-radius: 8px;
+  background: var(--cell);
+  box-shadow: 0 1px 0 var(--tertiary);
+  font-size: 15px;
+  font-weight: 500;
+}
+.keycap:active {
+  background: var(--cell-pressed);
+}
+.keygrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+  gap: 8px;
+  padding: 12px;
+  background: var(--fill-3);
+}
+.keygrid .keycap {
+  min-width: 0;
+}
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 12px 16px;
+}
+.chip {
+  min-height: 34px;
+  padding: 0 14px;
+  border-radius: 17px;
+  background: var(--fill-3);
+  color: var(--blue);
+  font-size: 15px;
+  font-weight: 500;
+}
+.chip:active {
+  background: var(--fill);
+}
+
+/* ---- trackpad ---------------------------------------------------------- */
+.pad-screen {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 0;
+  min-width: 0; /* or the key strip's width becomes the screen's */
+}
+.pad {
+  flex: 1;
+  min-height: 180px;
+  display: grid;
+  place-items: center;
+  border-radius: 22px;
+  background: var(--cell);
+  box-shadow: inset 0 0 0 0.5px var(--separator);
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+.pad-hint {
+  color: var(--tertiary);
+  font-size: 15px;
+  pointer-events: none;
+}
+.button-row {
+  display: flex;
+  gap: 12px;
+}
+.mouse-buttons {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 0.45fr 1fr;
+  border-radius: 14px;
+  overflow: hidden;
+  background: var(--cell);
+}
+.mouse-buttons button {
+  min-height: 52px;
+  touch-action: none;
+}
+.mouse-buttons button + button {
+  border-left: 0.5px solid var(--separator);
+}
+.mouse-buttons button:active {
+  background: var(--cell-pressed);
+}
+.round-toggle {
+  flex: none;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: var(--cell);
+  color: var(--secondary);
+  font-size: 22px;
+  display: grid;
+  place-items: center;
+  transition: background-color 0.15s, color 0.15s;
+}
+.round-toggle.on {
+  background: var(--blue);
+  color: #fff;
+}
+.strip {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  margin: 0 -16px;
+  padding: 2px 16px;
+}
+.strip::-webkit-scrollbar {
+  display: none;
+}
+.strip .keycap {
+  flex: none;
+}
+
+/* ---- media ------------------------------------------------------------- */
+.media {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.media-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  border-radius: 22px;
+  background: var(--cell);
+}
+.media-card.transport {
+  flex-direction: row;
+  justify-content: space-evenly;
+  align-items: center;
+  padding: 24px 16px;
+}
+.media-caption {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--secondary);
+}
+.media-row {
+  display: flex;
+  justify-content: space-evenly;
+}
+.media-button {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 28px;
+  background: var(--fill-3);
+  transition: transform 0.1s, background-color 0.15s;
+}
+.media-button.big {
+  width: 84px;
+  height: 84px;
+  font-size: 38px;
+  background: var(--blue);
+  color: #fff;
+}
+.media-button:active {
+  transform: scale(0.92);
+  background: var(--fill);
+}
+.media-button.big:active {
+  background: var(--blue);
+  opacity: 0.8;
+}
+
+/* Landscape phones: the trackpad beside its controls. */
+@media (orientation: landscape) and (max-height: 500px) {
+  .large-title {
+    display: none;
+  }
+  .pad-screen {
+    display: grid;
+    grid-template-columns: 1fr minmax(260px, 38%);
+    grid-auto-rows: min-content;
+    align-content: start;
+  }
+  .pad {
+    grid-row: 1 / span 3;
+    height: 100%;
+  }
+  .strip {
+    flex-wrap: wrap;
+    margin: 0;
+    padding: 0;
+  }
+}
+
+/* Tablets and desktop browsers: keep lists readable, not edge to edge. */
+@media (min-width: 720px) {
+  .content > * {
+    max-width: 680px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .content.fill > * {
+    max-width: none;
+  }
+}
