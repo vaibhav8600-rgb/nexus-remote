@@ -353,10 +353,6 @@ button.cell:active:not(:disabled) {
   --tint: #6d4aff;
   --tint-on: #ffffff;
   --bar: rgba(250, 249, 255, 0.84);
-  --kb-bg: #d3d2dc;
-  --kb-key: #ffffff;
-  --kb-special: #abaab9;
-  --kb-shadow: 0 1px 0 rgba(0, 0, 0, 0.3);
 }
 :root[data-theme='dark'] {
   --wall-top: #0b0b1e;
@@ -371,10 +367,6 @@ button.cell:active:not(:disabled) {
   --tint: #5cffc0;
   --tint-on: #05050c;
   --bar: rgba(16, 16, 32, 0.86);
-  --kb-bg: #1b1b2a;
-  --kb-key: #4a4a5c;
-  --kb-special: #2e2e40;
-  --kb-shadow: 0 1px 0 rgba(0, 0, 0, 0.6);
 }
 
 .app {
@@ -594,6 +586,19 @@ button.cell:active:not(:disabled) {
   width: 0.5px;
   height: 26px;
   background: var(--separator);
+}
+/* Focusable - a phone will not raise its keyboard for a hidden field - but
+ * invisible, and too small to catch a tap. */
+.live-input {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  border: 0;
+  padding: 0;
+  font-size: 16px; /* under 16px, iOS zooms the page on focus */
 }
 
 /* Keys a phone keyboard lacks, above it. */
@@ -836,122 +841,5 @@ button.cell:active:not(:disabled) {
   }
   .keys-panel {
     max-height: 55%;
-  }
-}
-
-/* ---- the keyboard: a phone keyboard that sends real keys --------------- */
-.kb-open .toolbar {
-  padding-bottom: 0;
-}
-.keyboard {
-  background: var(--kb-bg);
-  padding-bottom: env(safe-area-inset-bottom);
-  user-select: none;
-  -webkit-user-select: none;
-}
-.keyboard .key-strip {
-  background: transparent;
-  -webkit-backdrop-filter: none;
-  backdrop-filter: none;
-}
-.keyboard .key-strip button {
-  background: var(--kb-special);
-  box-shadow: var(--kb-shadow);
-}
-.keyboard .key-strip button.armed {
-  background: var(--kb-key);
-  color: var(--tint);
-}
-.keyboard .key-strip button.locked {
-  background: var(--tint);
-  color: var(--tint-on);
-}
-.qwerty {
-  /* One letter key: ten per row, six-point gaps, three-point margins. */
-  --k: calc((100vw - 6px - 54px) / 10);
-  display: flex;
-  flex-direction: column;
-  gap: 11px;
-  padding: 4px 3px 6px;
-}
-.kb-row {
-  display: flex;
-  gap: 6px;
-}
-.kb-row.inset {
-  padding: 0 calc(var(--k) / 2 + 3px);
-}
-.kb-group {
-  display: flex;
-  gap: 6px;
-  margin: 0 auto;
-}
-.kb-key {
-  position: relative;
-  flex: 1 1 0;
-  height: 42px;
-  border-radius: 5px;
-  background: var(--kb-key);
-  box-shadow: var(--kb-shadow);
-  color: var(--label);
-  font-size: 23px;
-  font-weight: 400;
-  touch-action: manipulation;
-}
-.kb-group .kb-key {
-  flex: 0 0 var(--k);
-}
-.kb-key.special {
-  background: var(--kb-special);
-  font-size: 16px;
-}
-.kb-key.special.wide {
-  flex: 0 0 calc(var(--k) * 1.3);
-  font-size: 20px;
-}
-.kb-key.special.active {
-  background: var(--kb-key);
-}
-.kb-row:last-child .special:first-child {
-  flex: 0 0 calc(var(--k) * 1.3);
-}
-.kb-row:last-child .special:last-child {
-  flex: 0 0 calc(var(--k) * 2.3);
-}
-.kb-key.space {
-  font-size: 16px;
-}
-.kb-key.special:active,
-.kb-key.space:active {
-  background: var(--kb-key);
-}
-/* The callout a phone raises above your finger. */
-.kb-callout {
-  position: absolute;
-  left: 50%;
-  bottom: calc(100% - 4px);
-  transform: translateX(-50%);
-  min-width: calc(100% + 16px);
-  height: 56px;
-  display: grid;
-  place-items: center;
-  border-radius: 10px;
-  background: var(--kb-key);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.22);
-  font-size: 34px;
-  pointer-events: none;
-  z-index: 2;
-}
-
-@media (orientation: landscape) and (max-height: 500px) {
-  .qwerty {
-    gap: 6px;
-  }
-  .kb-key {
-    height: 32px;
-    font-size: 19px;
-  }
-  .kb-callout {
-    display: none;
   }
 }

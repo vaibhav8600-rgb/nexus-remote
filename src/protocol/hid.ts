@@ -85,33 +85,3 @@ export function shortcuts(os: HostOs): KeyDef[] {
     mac ? k('Force quit', KEY.esc, Mod.gui | Mod.alt) : k('Task mgr', KEY.esc, Mod.ctrl | Mod.shift),
   ];
 }
-
-// US layout: printable ASCII -> keyboard usage, and whether Shift is needed.
-// The same table the NEXUS firmware types text with (src/remote/remote_proto.c).
-// SHIFTED[i] is Shift + UNSHIFTED[i]; the space has no shifted twin.
-const UNSHIFTED = "`1234567890-=[]\\;',./ ";
-const SHIFTED = '~!@#$%^&*()_+{}|:"<>?';
-const USAGE_OF: Record<string, number> = {
-  '`': 0x35,
-  '-': 0x2d,
-  '=': 0x2e,
-  '[': 0x2f,
-  ']': 0x30,
-  '\\': 0x31,
-  ';': 0x33,
-  "'": 0x34,
-  ',': 0x36,
-  '.': 0x37,
-  '/': 0x38,
-  ' ': 0x2c,
-};
-
-/** The key and Shift state that type @p ch on a US keyboard, or null. */
-export function asciiKey(ch: string): { usage: number; shift: boolean } | null {
-  if (/^[a-z0-9]$/.test(ch)) return { usage: letter(ch), shift: false };
-  if (/^[A-Z]$/.test(ch)) return { usage: letter(ch), shift: true };
-  const i = SHIFTED.indexOf(ch);
-  if (ch.length === 1 && i >= 0) return { usage: asciiKey(UNSHIFTED[i])!.usage, shift: true };
-  if (ch.length === 1 && UNSHIFTED.includes(ch)) return { usage: USAGE_OF[ch], shift: false };
-  return null;
-}

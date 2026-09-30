@@ -216,26 +216,3 @@ describe('sticky modifiers', () => {
     expect(consumeMods(tapMod(tapMod(NO_MODS, Mod.ctrl), Mod.shift))[0]).toBe(Mod.ctrl | Mod.shift);
   });
 });
-
-describe('on-screen keyboard: ASCII to keys', () => {
-  it('types every printable character, each with its own key and shift', async () => {
-    const { asciiKey } = await import('./hid');
-    const seen = new Set<string>();
-    for (let c = 0x20; c <= 0x7e; c++) {
-      const k = asciiKey(String.fromCharCode(c));
-      expect(k, String.fromCharCode(c)).not.toBeNull();
-      const id = `${k!.usage}/${k!.shift}`;
-      expect(seen.has(id), String.fromCharCode(c)).toBe(false);
-      seen.add(id);
-    }
-    // Spot checks against the firmware's table (remote_proto.c).
-    expect(asciiKey('a')).toEqual({ usage: 0x04, shift: false });
-    expect(asciiKey('Z')).toEqual({ usage: 0x1d, shift: true });
-    expect(asciiKey('@')).toEqual({ usage: 0x1f, shift: true });
-    expect(asciiKey('"')).toEqual({ usage: 0x34, shift: true });
-    expect(asciiKey('~')).toEqual({ usage: 0x35, shift: true });
-    expect(asciiKey('?')).toEqual({ usage: 0x38, shift: true });
-    expect(asciiKey(' ')).toEqual({ usage: 0x2c, shift: false });
-    expect(asciiKey('é')).toBeNull();
-  });
-});

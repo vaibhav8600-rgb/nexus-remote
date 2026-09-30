@@ -1,176 +1,83 @@
-import { useRef, useState, type PointerEvent, type ReactNode } from 'react';
+import { forwardRef, useRef, useState, type ChangeEvent, type KeyboardEvent } from 'react';
 import type { Ctx } from '../App';
 import { link } from '../ble/link';
-import { KEY, asciiKey } from '../protocol/hid';
+import { KEY, letter } from '../protocol/hid';
 import { Mod, Page } from '../protocol/packets';
-import { haptic, useSettings } from '../settings';
+import { useSettings } from '../settings';
 
-type Echo = (text: string, erased: number) => void;
-type Layer = 'abc' | '123' | 'sym';
-type Shift = 'off' | 'once' | 'lock';
-
-// The US layout, laid out the way a phone keyboard is. Every character here
-// is one the dongle can type; see asciiKey().
-const ROWS: Record<Layer, [string, string, string]> = {
-  abc: ['qwertyuiop', 'asdfghjkl', 'zxcvbnm'],
-  '123': ['1234567890', '-/:;()$&@"', ".,?!'"],
-  sym: ['[]{}#%^*+=', '_\\|~<>`', ".,?!'"],
-};
-
-const DOUBLE_TAP_MS = 300;
-const REPEAT_DELAY_MS = 450;
-const REPEAT_MS = 70;
+// The field always holds one character, so a Backspace on an otherwise empty
+// field still has something to delete - and still fires.
+const SEED = ' ';
 
 /**
- * A phone-style QWERTY that sends real key presses, not text: so it works
- * with Ctrl, Alt and Win from the strip above, and with any app on the
- * computer, exactly as a hardware keyboard would.
+ * The phone's own keyboard, driven through an invisible field. Android
+ * keyboards with autocorrect do not send reliable key events, so the field is
+ * diffed instead: what vanished becomes Backspaces, what appeared is typed.
  */
-export function Qwerty({ ctx, onEcho }: { ctx: Ctx; onEcho: Echo }) {
-  const [layer, setLayer] = useState<Layer>('abc');
-  const [shift, setShift] = useState<Shift>('off');
-  const lastShift = useRef(0);
-  const repeat = useRef<ReturnType<typeof setTimeout>>(undefined);
-  const rows = ROWS[layer];
-  const upper = layer === 'abc' && shift !== 'off';
+export const LiveInput = forwardRef<
+  HTMLInputElement,
+  { ctx: Ctx; onEcho: (text: string, erased: number) => void; onBlur: () => void }
+>(function LiveInput({ ctx, onEcho, onBlur }, ref) {
+  const [value, setValue] = useState(SEED);
+  const prev = useRef(SEED);
 
-  const type = (ch: string) => {
-    const key = asciiKey(ch);
-    if (!key) return;
-    let withShift = key.shift;
-    // With Caps Lock on the computer, a letter needs Shift to stay lower case.
-    if (/[a-z]/i.test(ch) && link.status?.capsLock) withShift = !withShift;
-    ctx.tapKey(Page.keyboard, key.usage, withShift ? Mod.shift : 0);
-    onEcho(ch, 0);
-    if (shift === 'once') setShift('off');
+  const onChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const next = e.target.value;
+    const old = prev.current;
+    let same = 0;
+    while (same < old.length && same < next.length && old[same] === next[same]) same++;
+    const erased = old.length - same;
+    const added = next.slice(same);
+
+    for (let i = 0; i < erased; i++) ctx.tapKey(Page.keyboard, KEY.backspace);
+    // With a sticky modifier armed, one letter is a shortcut: Ctrl, then c.
+    if (added.length === 1 && (ctx.mods.once || ctx.mods.locked) && /[a-z0-9]/i.test(added)) {
+      ctx.tapKey(Page.keyboard, letter(added));
+    } else if (added) {
+      link.typeText(added);
+    }
+    onEcho(added, erased);
+
+    const keep = next.length === 0 || next.length > 48 ? SEED : next;
+    prev.current = keep;
+    setValue(keep);
   };
 
-  const onShift = () => {
-    const now = performance.now();
-    if (shift === 'lock') setShift('off');
-    else if (shift === 'once' && now - lastShift.current < DOUBLE_TAP_MS) setShift('lock');
-    else setShift(shift === 'off' ? 'once' : 'off');
-    lastShift.current = now;
-  };
-
-  const backspace = () => {
-    ctx.tapKey(Page.keyboard, KEY.backspace);
-    onEcho('', 1);
-  };
-  const stopRepeat = () => clearTimeout(repeat.current);
-  const holdBackspace = {
-    onPointerDown: (e: PointerEvent) => {
+  const onKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
       e.preventDefault();
-      backspace();
-      const again = () => {
-        backspace();
-        repeat.current = setTimeout(again, REPEAT_MS);
-      };
-      repeat.current = setTimeout(again, REPEAT_DELAY_MS);
-    },
-    onPointerUp: stopRepeat,
-    onPointerCancel: stopRepeat,
-    onPointerLeave: stopRepeat,
+      ctx.tapKey(Page.keyboard, KEY.enter);
+      onEcho('\n', 0);
+    }
   };
 
-  const chars = (row: string) =>
-    [...row].map((c) => {
-      const shown = upper ? c.toUpperCase() : c;
-      return <CharKey key={c} label={shown} onType={() => type(shown)} />;
-    });
-
   return (
-    <div className="qwerty" onContextMenu={(e) => e.preventDefault()}>
-      <div className="kb-row">{chars(rows[0])}</div>
-      <div className={layer === 'abc' ? 'kb-row inset' : 'kb-row'}>{chars(rows[1])}</div>
-      <div className="kb-row">
-        {layer === 'abc' ? (
-          <Special wide label="Shift" active={shift !== 'off'} onClick={onShift}>
-            {shift === 'lock' ? '⇪' : '⇧'}
-          </Special>
-        ) : (
-          <Special wide label="More symbols" onClick={() => setLayer(layer === '123' ? 'sym' : '123')}>
-            {layer === '123' ? '#+=' : '123'}
-          </Special>
-        )}
-        <div className="kb-group">{chars(rows[2])}</div>
-        <button className="kb-key special wide" aria-label="Delete" {...holdBackspace}>
-          ⌫
-        </button>
-      </div>
-      <div className="kb-row">
-        <Special
-          label={layer === 'abc' ? 'Numbers' : 'Letters'}
-          onClick={() => setLayer(layer === 'abc' ? '123' : 'abc')}
-        >
-          {layer === 'abc' ? '123' : 'ABC'}
-        </Special>
-        <button className="kb-key space" onPointerDown={() => haptic()} onClick={() => type(' ')}>
-          space
-        </button>
-        <Special
-          label="Return"
-          onClick={() => {
-            ctx.tapKey(Page.keyboard, KEY.enter);
-            onEcho('\n', 0);
-          }}
-        >
-          return
-        </Special>
-      </div>
-    </div>
+    <input
+      ref={ref}
+      className="live-input"
+      value={value}
+      onChange={onChange}
+      onKeyDown={onKeyDown}
+      onBlur={onBlur}
+      autoCapitalize="off"
+      autoComplete="off"
+      autoCorrect="off"
+      spellCheck={false}
+      enterKeyHint="send"
+      aria-label="Type on the computer"
+    />
   );
-}
+});
 
-/** A character key, with the callout a phone shows above your finger. */
-function CharKey({ label, onType }: { label: string; onType: () => void }) {
-  const [down, setDown] = useState(false);
-  return (
-    <button
-      className={down ? 'kb-key down' : 'kb-key'}
-      onPointerDown={() => {
-        haptic();
-        setDown(true);
-      }}
-      onPointerUp={() => setDown(false)}
-      onPointerCancel={() => setDown(false)}
-      onPointerLeave={() => setDown(false)}
-      onClick={onType}
-    >
-      {label}
-      {down && (
-        <span className="kb-callout" aria-hidden="true">
-          {label}
-        </span>
-      )}
-    </button>
-  );
-}
-
-function Special(props: { label: string; onClick: () => void; children: ReactNode; wide?: boolean; active?: boolean }) {
-  return (
-    <button
-      className={`kb-key special${props.wide ? ' wide' : ''}${props.active ? ' active' : ''}`}
-      aria-label={props.label}
-      aria-pressed={props.active}
-      onClick={() => {
-        haptic();
-        props.onClick();
-      }}
-    >
-      {props.children}
-    </button>
-  );
-}
-
-/** The keys a phone keyboard does not have, above it - and Paste. */
-export function KeyStrip({ ctx, onEcho }: { ctx: Ctx; onEcho: Echo }) {
+/** The keys a phone keyboard does not have, above it. */
+export function KeyStrip({ ctx }: { ctx: Ctx }) {
   const { os } = useSettings();
   const mac = os === 'mac';
   const mods: [string, number][] = [
     [mac ? '⌃' : 'Ctrl', Mod.ctrl],
     [mac ? '⌥' : 'Alt', Mod.alt],
     [mac ? '⌘' : os === 'windows' ? 'Win' : 'Super', Mod.gui],
+    ['⇧', Mod.shift],
   ];
   const keys: [string, number][] = [
     ['Esc', KEY.esc],
@@ -184,21 +91,8 @@ export function KeyStrip({ ctx, onEcho }: { ctx: Ctx; onEcho: Echo }) {
     ['End', KEY.end],
   ];
 
-  // The phone's clipboard, typed out by NEXUS - for anything longer than a
-  // few words. Browsers ask permission the first time.
-  const paste = async () => {
-    haptic();
-    try {
-      const text = await navigator.clipboard.readText();
-      link.typeText(text);
-      onEcho(text.slice(-24), 0);
-    } catch {
-      onEcho('Clipboard not available', 0);
-    }
-  };
-
   return (
-    <div className="key-strip">
+    <div className="key-strip" onPointerDown={(e) => e.preventDefault() /* keep the phone keyboard up */}>
       {mods.map(([label, bit]) => (
         <button
           key={label}
@@ -215,8 +109,6 @@ export function KeyStrip({ ctx, onEcho }: { ctx: Ctx; onEcho: Echo }) {
           {label}
         </button>
       ))}
-      <span className="divider" />
-      <button onClick={() => void paste()}>Paste</button>
     </div>
   );
 }
