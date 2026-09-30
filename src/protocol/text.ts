@@ -5,10 +5,20 @@ import type { Bytes } from './packets';
 // What phone keyboards substitute behind your back, mapped back to what you
 // meant. Anything else outside the set is dropped rather than mistyped.
 const SUBSTITUTES: Record<string, string> = {
-  '‘': "'", '’': "'", '‚': "'", '′': "'",
-  '“': '"', '”': '"', '„': '"', '″': '"',
-  '–': '-', '—': '-', '−': '-',
-  '…': '...', ' ': ' ', '•': '*',
+  '‘': "'",
+  '’': "'",
+  '‚': "'",
+  '′': "'",
+  '“': '"',
+  '”': '"',
+  '„': '"',
+  '″': '"',
+  '–': '-',
+  '—': '-',
+  '−': '-',
+  '…': '...',
+  ' ': ' ',
+  '•': '*',
 };
 
 export function isTypeable(code: number): boolean {

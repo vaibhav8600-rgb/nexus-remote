@@ -32,7 +32,10 @@ export const TrackpadIcon = () => (
 export const KeyboardIcon = () => (
   <Icon>
     <rect x="2.5" y="6" width="19" height="12" rx="2.5" />
-    <path d="M6 9.5h.01M9.3 9.5h.01M12.6 9.5h.01M15.9 9.5h.01M18.2 9.5h.01M6 12.5h.01M9.3 12.5h.01M12.6 12.5h.01M15.9 12.5h.01M18.2 12.5h.01M8 15h8" strokeWidth={2} />
+    <path
+      d="M6 9.5h.01M9.3 9.5h.01M12.6 9.5h.01M15.9 9.5h.01M18.2 9.5h.01M6 12.5h.01M9.3 12.5h.01M12.6 12.5h.01M15.9 12.5h.01M18.2 12.5h.01M8 15h8"
+      strokeWidth={2}
+    />
   </Icon>
 );
 
@@ -44,7 +47,8 @@ export const MediaIcon = () => (
 );
 
 // gearshape: eight flat-topped teeth around a hub.
-const GEAR = 'M21.22 10.79 L21.22 13.21 L19.15 13.92 L18.41 15.69 L19.37 17.67 L17.67 19.37 L15.69 18.41 L13.92 19.15 L13.21 21.22 L10.79 21.22 L10.08 19.15 L8.31 18.41 L6.33 19.37 L4.63 17.67 L5.59 15.69 L4.85 13.92 L2.78 13.21 L2.78 10.79 L4.85 10.08 L5.59 8.31 L4.63 6.33 L6.33 4.63 L8.31 5.59 L10.08 4.85 L10.79 2.78 L13.21 2.78 L13.92 4.85 L15.69 5.59 L17.67 4.63 L19.37 6.33 L18.41 8.31 L19.15 10.08Z';
+const GEAR =
+  'M21.22 10.79 L21.22 13.21 L19.15 13.92 L18.41 15.69 L19.37 17.67 L17.67 19.37 L15.69 18.41 L13.92 19.15 L13.21 21.22 L10.79 21.22 L10.08 19.15 L8.31 18.41 L6.33 19.37 L4.63 17.67 L5.59 15.69 L4.85 13.92 L2.78 13.21 L2.78 10.79 L4.85 10.08 L5.59 8.31 L4.63 6.33 L6.33 4.63 L8.31 5.59 L10.08 4.85 L10.79 2.78 L13.21 2.78 L13.92 4.85 L15.69 5.59 L17.67 4.63 L19.37 6.33 L18.41 8.31 L19.15 10.08Z';
 
 export const GearIcon = () => (
   <Icon>
@@ -107,7 +111,67 @@ export const SunIcon = ({ big }: { big?: boolean }) => (
     {big ? (
       <path d="M12 2.5v2M12 19.5v2M21.5 12h-2M4.5 12h-2M18.7 5.3l-1.4 1.4M6.7 17.3l-1.4 1.4M18.7 18.7l-1.4-1.4M6.7 6.7 5.3 5.3" />
     ) : (
-      <path d="M12 5.5v.5M12 18v.5M18.5 12H18M6 12h-.5M16.6 7.4l-.3.3M7.7 16.3l-.3.3M16.6 16.6l-.3-.3M7.7 7.7l-.3-.3" strokeWidth={2.4} />
+      <path
+        d="M12 5.5v.5M12 18v.5M18.5 12H18M6 12h-.5M16.6 7.4l-.3.3M7.7 16.3l-.3.3M16.6 16.6l-.3-.3M7.7 7.7l-.3-.3"
+        strokeWidth={2.4}
+      />
     )}
+  </Icon>
+);
+
+export const MenuIcon = () => (
+  <Icon>
+    <path d="M4 7h16M4 12h16M4 17h16" />
+  </Icon>
+);
+
+export const WindowIcon = () => (
+  <Icon>
+    <rect x="3" y="5" width="18" height="14" rx="2.5" />
+    <path d="M3 9h18" />
+  </Icon>
+);
+
+export const MonitorIcon = () => (
+  <Icon>
+    <rect x="3" y="4.5" width="18" height="12" rx="2" />
+    <path d="M9 20h6M12 16.5V20" />
+    <path d="m8.5 10.5 2 2 4-4" />
+  </Icon>
+);
+
+export const ChevronUp = () => (
+  <Icon>
+    <path d="m7 14 5-5 5 5" />
+  </Icon>
+);
+
+export const ChevronDown = () => (
+  <Icon>
+    <path d="m7 10 5 5 5-5" />
+  </Icon>
+);
+
+export const ChevronLeft = () => (
+  <Icon>
+    <path d="m14 7-5 5 5 5" />
+  </Icon>
+);
+
+export const ChevronRight = () => (
+  <Icon>
+    <path d="m10 7 5 5-5 5" />
+  </Icon>
+);
+
+export const CloseIcon = () => (
+  <Icon>
+    <path d="m7 7 10 10M17 7 7 17" />
+  </Icon>
+);
+
+export const StopIcon = () => (
+  <Icon>
+    <rect x="7" y="7" width="10" height="10" rx="1.5" />
   </Icon>
 );

@@ -1,24 +1,20 @@
-import { useEffect, useMemo, useRef, useState, type PointerEvent } from 'react';
+import { useEffect, useMemo, useRef, type PointerEvent } from 'react';
 import type { Ctx } from '../App';
 import { link } from '../ble/link';
+import { ChevronDown, ChevronUp } from '../icons';
 import { Gestures, type Intent } from '../protocol/gestures';
-import { LockIcon } from '../icons';
-import { KEY } from '../protocol/hid';
 import { Button, KeyAction, Page } from '../protocol/packets';
 import { haptic, useSettings } from '../settings';
-import { ModRow } from './ModRow';
 
-const QUICK_KEYS: [string, number][] = [
-  ['Esc', KEY.esc], ['Tab', KEY.tab], ['⏎', KEY.enter], ['⌫', KEY.backspace],
-  ['←', KEY.left], ['↑', KEY.up], ['↓', KEY.down], ['→', KEY.right],
-];
+/** Finger travel on the side strip per wheel notch, before the speed setting. */
+const STRIP_PX = 18;
 
-export function Trackpad({ ctx }: { ctx: Ctx }) {
+export function Trackpad({ ctx, echo, buttons }: { ctx: Ctx; echo: string; buttons: boolean }) {
   const s = useSettings();
   const gestures = useMemo(() => new Gestures({ tapToClick: true, longPressRight: false }), []);
   gestures.opts = { tapToClick: s.tapToClick, longPressRight: s.longPressRight };
   const lastMove = useRef(0);
-  const [dragLock, setDragLock] = useState(false);
+  const stripY = useRef<number | null>(null);
 
   // Nothing stays held when the trackpad goes away.
   useEffect(() => () => ctx.mouse.releaseAll(), [ctx.mouse]);
@@ -26,11 +22,19 @@ export function Trackpad({ ctx }: { ctx: Ctx }) {
   const click = async (bit: number) => {
     haptic();
     const mods = ctx.takeMods();
-    // Ctrl-click and friends: the modifiers go down first, and only once the
-    // dongle has them does the click go - the mouse lane would overtake.
+    // Ctrl-click and friends: the modifiers go down first, and only once
+    // NEXUS has them does the click go - the mouse lane would overtake.
     if (mods) await link.key(KeyAction.press, mods, Page.keyboard, 0).catch(() => undefined);
     ctx.mouse.click(bit);
     if (mods) setTimeout(() => void link.key(KeyAction.release, mods, Page.keyboard, 0).catch(() => undefined), 80);
+  };
+
+  // HID wheel up is positive. Natural scrolling moves the content with the
+  // finger, so a finger going up scrolls the view down.
+  const scroll = (fingerDx: number, fingerDy: number) => {
+    const k = s.scroll / 24;
+    const sign = s.natural ? 1 : -1;
+    ctx.mouse.scroll(-sign * fingerDx * k, sign * fingerDy * k);
   };
 
   const apply = (out: Intent[], t: number) => {
@@ -43,11 +47,7 @@ export function Trackpad({ ctx }: { ctx: Ctx }) {
         const gain = s.speed * (1 + s.accel * Math.min(Math.max(v - 0.25, 0), 3));
         ctx.mouse.move(o.dx * gain, o.dy * gain);
       } else if (o.kind === 'scroll') {
-        const k = s.scroll / 24;
-        const sign = s.natural ? 1 : -1;
-        // HID wheel up is positive. Natural scrolling moves the content with
-        // the fingers, so fingers going up scroll the view down.
-        ctx.mouse.scroll(-sign * o.dx * k, sign * o.dy * k);
+        scroll(o.dx, o.dy);
       } else if (o.kind === 'click') {
         void click(o.button);
       } else {
@@ -57,13 +57,36 @@ export function Trackpad({ ctx }: { ctx: Ctx }) {
     }
   };
 
-  const on = (type: 'down' | 'move' | 'up' | 'cancel') => (e: PointerEvent<HTMLDivElement>) => {
+  const onPad = (type: 'down' | 'move' | 'up' | 'cancel') => (e: PointerEvent<HTMLDivElement>) => {
     e.preventDefault();
     if (type === 'down') {
       e.currentTarget.setPointerCapture(e.pointerId);
       lastMove.current = e.timeStamp;
     }
     apply(gestures.handle({ type, id: e.pointerId, x: e.clientX, y: e.clientY, t: e.timeStamp }), e.timeStamp);
+  };
+
+  // The side strip: one finger, vertical only, like a scroll wheel you drag.
+  const strip = {
+    onPointerDown: (e: PointerEvent<HTMLDivElement>) => {
+      e.preventDefault();
+      e.stopPropagation();
+      e.currentTarget.setPointerCapture(e.pointerId);
+      stripY.current = e.clientY;
+    },
+    onPointerMove: (e: PointerEvent<HTMLDivElement>) => {
+      if (stripY.current === null) return;
+      const dy = e.clientY - stripY.current;
+      stripY.current = e.clientY;
+      scroll(0, (dy * 24) / STRIP_PX);
+    },
+    onPointerUp: () => (stripY.current = null),
+    onPointerCancel: () => (stripY.current = null),
+  };
+
+  const notch = (up: boolean) => {
+    haptic();
+    ctx.mouse.scroll(0, up ? 3 : -3);
   };
 
   const hold = (bit: number) => ({
@@ -75,52 +98,44 @@ export function Trackpad({ ctx }: { ctx: Ctx }) {
     onPointerUp: () => ctx.mouse.set(bit, false),
     onPointerCancel: () => ctx.mouse.set(bit, false),
     onPointerLeave: () => {
-      if (ctx.mouse.held & bit && !(dragLock && bit === Button.left)) ctx.mouse.set(bit, false);
+      if (ctx.mouse.held & bit) ctx.mouse.set(bit, false);
     },
   });
 
-  const toggleLock = () => {
-    haptic();
-    setDragLock(!dragLock);
-    ctx.mouse.set(Button.left, !dragLock);
-  };
-
   return (
-    <div className="pad-screen">
+    <div className="surface">
       <div
         className="pad"
         aria-label="Trackpad"
-        onPointerDown={on('down')}
-        onPointerMove={on('move')}
-        onPointerUp={on('up')}
-        onPointerCancel={on('cancel')}
+        onPointerDown={onPad('down')}
+        onPointerMove={onPad('move')}
+        onPointerUp={onPad('up')}
+        onPointerCancel={onPad('cancel')}
         onContextMenu={(e) => e.preventDefault()}
       >
-        {link.state !== 'connected' && <span className="pad-hint">Connect to NEXUS to start</span>}
+        {echo ? (
+          <span className="echo">{echo}</span>
+        ) : (
+          link.state !== 'connected' && <span className="pad-hint">Tap NEXUS above to connect</span>
+        )}
       </div>
-      <div className="button-row">
-        <div className="mouse-buttons">
-          <button aria-label="Left click" {...hold(Button.left)} />
-          <button aria-label="Middle click" className="middle" {...hold(Button.middle)} />
-          <button aria-label="Right click" {...hold(Button.right)} />
-        </div>
-        <button
-          className={`round-toggle${dragLock ? ' on' : ''}`}
-          aria-pressed={dragLock}
-          aria-label="Drag lock: hold the left button"
-          onClick={toggleLock}
-        >
-          <LockIcon />
+
+      <div className={buttons ? 'scroll-strip' : 'scroll-strip full'} aria-label="Scroll" {...strip}>
+        <button aria-label="Scroll up" onPointerDown={(e) => e.stopPropagation()} onClick={() => notch(true)}>
+          <ChevronUp />
+        </button>
+        <button aria-label="Scroll down" onPointerDown={(e) => e.stopPropagation()} onClick={() => notch(false)}>
+          <ChevronDown />
         </button>
       </div>
-      <ModRow ctx={ctx} />
-      <div className="strip">
-        {QUICK_KEYS.map(([label, usage]) => (
-          <button key={label} className="keycap" onClick={() => ctx.tapKey(Page.keyboard, usage)}>
-            {label}
-          </button>
-        ))}
-      </div>
+
+      {buttons && (
+        <div className="mouse-buttons">
+          <button aria-label="Left click" {...hold(Button.left)} />
+          <button aria-label="Middle click" {...hold(Button.middle)} />
+          <button aria-label="Right click" {...hold(Button.right)} />
+        </div>
+      )}
     </div>
   );
 }

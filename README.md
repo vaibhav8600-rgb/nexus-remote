@@ -8,6 +8,12 @@ computer, so nothing is installed on the computer.
 A web app (PWA) in React, Vite and TypeScript, styled after Apple's Human
 Interface Guidelines, with Automatic, Light and Dark themes.
 
+One screen, like a laptop's trackpad: the whole background is the pad, a
+strip down the right edge scrolls, three buttons along the bottom click. The
+toolbar opens the rest in place - settings (≡), a media click wheel (▷),
+shortcuts and special keys (▭), and the phone's own keyboard (⌨) with a strip
+of Ctrl/Alt/Win/Esc/arrows above it.
+
 | Phone | How |
 | --- | --- |
 | Android | Open the site in **Chrome**, tap **Connect**. Menu > **Add to Home screen** for a full-screen app. |

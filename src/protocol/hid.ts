@@ -11,9 +11,22 @@ export interface KeyDef {
 const k = (label: string, usage: number, mods = 0): KeyDef => ({ label, page: Page.keyboard, usage, mods });
 
 export const KEY = {
-  enter: 0x28, esc: 0x29, backspace: 0x2a, tab: 0x2b, space: 0x2c,
-  printScreen: 0x46, insert: 0x49, home: 0x4a, pageUp: 0x4b, del: 0x4c,
-  end: 0x4d, pageDown: 0x4e, right: 0x4f, left: 0x50, down: 0x51, up: 0x52,
+  enter: 0x28,
+  esc: 0x29,
+  backspace: 0x2a,
+  tab: 0x2b,
+  space: 0x2c,
+  printScreen: 0x46,
+  insert: 0x49,
+  home: 0x4a,
+  pageUp: 0x4b,
+  del: 0x4c,
+  end: 0x4d,
+  pageDown: 0x4e,
+  right: 0x4f,
+  left: 0x50,
+  down: 0x51,
+  up: 0x52,
   f1: 0x3a,
 } as const;
 
@@ -27,10 +40,21 @@ export function letter(ch: string): number {
 }
 
 export const SPECIAL_KEYS: KeyDef[] = [
-  k('Esc', KEY.esc), k('Tab', KEY.tab), k('Enter', KEY.enter), k('⌫', KEY.backspace),
-  k('Del', KEY.del), k('←', KEY.left), k('↑', KEY.up), k('↓', KEY.down), k('→', KEY.right),
-  k('Home', KEY.home), k('End', KEY.end), k('PgUp', KEY.pageUp), k('PgDn', KEY.pageDown),
-  k('Ins', KEY.insert), k('PrtSc', KEY.printScreen),
+  k('Esc', KEY.esc),
+  k('Tab', KEY.tab),
+  k('Enter', KEY.enter),
+  k('⌫', KEY.backspace),
+  k('Del', KEY.del),
+  k('←', KEY.left),
+  k('↑', KEY.up),
+  k('↓', KEY.down),
+  k('→', KEY.right),
+  k('Home', KEY.home),
+  k('End', KEY.end),
+  k('PgUp', KEY.pageUp),
+  k('PgDn', KEY.pageDown),
+  k('Ins', KEY.insert),
+  k('PrtSc', KEY.printScreen),
   ...Array.from({ length: 12 }, (_, i) => k(`F${i + 1}`, KEY.f1 + i)),
 ];
 
@@ -43,15 +67,20 @@ export function shortcuts(os: HostOs): KeyDef[] {
   const p = primary(os);
   const mac = os === 'mac';
   return [
-    k('Copy', letter('c'), p), k('Paste', letter('v'), p), k('Cut', letter('x'), p),
+    k('Copy', letter('c'), p),
+    k('Paste', letter('v'), p),
+    k('Cut', letter('x'), p),
     k('Undo', letter('z'), p),
     mac ? k('Redo', letter('z'), p | Mod.shift) : k('Redo', letter('y'), p),
-    k('Select all', letter('a'), p), k('Save', letter('s'), p), k('Find', letter('f'), p),
+    k('Select all', letter('a'), p),
+    k('Save', letter('s'), p),
+    k('Find', letter('f'), p),
     k('Switch app', KEY.tab, mac ? Mod.gui : Mod.alt),
     mac ? k('Desktop', 0x44 /* F11 */) : k('Desktop', letter('d'), Mod.gui),
     mac ? k('Lock', letter('q'), Mod.ctrl | Mod.gui) : k('Lock', letter('l'), Mod.gui),
     mac ? k('Close', letter('w'), Mod.gui) : k('Close', 0x3d /* F4 */, Mod.alt),
-    k('New tab', letter('t'), p), k('Close tab', letter('w'), p),
+    k('New tab', letter('t'), p),
+    k('Close tab', letter('w'), p),
     k('Next tab', KEY.tab, Mod.ctrl),
     mac ? k('Force quit', KEY.esc, Mod.gui | Mod.alt) : k('Task mgr', KEY.esc, Mod.ctrl | Mod.shift),
   ];

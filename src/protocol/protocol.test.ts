@@ -34,8 +34,14 @@ describe('packets match the protocol doc', () => {
   it('status', () => {
     const s = decodeStatus(new DataView(bytes('01 03 02 00 02 07').buffer));
     expect(s).toMatchObject({
-      version: 1, remoteOn: true, usb: true, typing: false, pairing: false,
-      capsLock: true, numLock: false, textFree: 512,
+      version: 1,
+      remoteOn: true,
+      usb: true,
+      typing: false,
+      pairing: false,
+      capsLock: true,
+      numLock: false,
+      textFree: 512,
       features: { text: true, consumer: true, hwheel: true },
     });
   });
@@ -82,15 +88,26 @@ describe('gestures', () => {
     const g = new Gestures(opts);
     return events.flatMap((e) => g.handle(e));
   };
-  const ev = (type: PointerIn['type'], id: number, x: number, y: number, t: number): PointerIn => ({ type, id, x, y, t });
-  const kinds = (out: Intent[]) => out.map((o) => (o.kind === 'click' ? `click${o.button}` : o.kind === 'drag' ? `drag${o.down ? 'Down' : 'Up'}` : o.kind));
+  const ev = (type: PointerIn['type'], id: number, x: number, y: number, t: number): PointerIn => ({
+    type,
+    id,
+    x,
+    y,
+    t,
+  });
+  const kinds = (out: Intent[]) =>
+    out.map((o) =>
+      o.kind === 'click' ? `click${o.button}` : o.kind === 'drag' ? `drag${o.down ? 'Down' : 'Up'}` : o.kind,
+    );
 
   it('one-finger tap is a left click', () => {
     expect(run([ev('down', 1, 100, 100, 0), ev('up', 1, 101, 100, 90)])).toEqual([{ kind: 'click', button: 1 }]);
   });
 
   it('tap-to-click off: no click', () => {
-    expect(run([ev('down', 1, 100, 100, 0), ev('up', 1, 100, 100, 90)], { tapToClick: false, longPressRight: false })).toEqual([]);
+    expect(
+      run([ev('down', 1, 100, 100, 0), ev('up', 1, 100, 100, 90)], { tapToClick: false, longPressRight: false }),
+    ).toEqual([]);
   });
 
   it('a slow press is not a tap', () => {
@@ -98,43 +115,82 @@ describe('gestures', () => {
   });
 
   it('long press is a right click when enabled', () => {
-    expect(run([ev('down', 1, 100, 100, 0), ev('up', 1, 100, 100, 700)], { tapToClick: true, longPressRight: true }))
-      .toEqual([{ kind: 'click', button: 2 }]);
+    expect(
+      run([ev('down', 1, 100, 100, 0), ev('up', 1, 100, 100, 700)], { tapToClick: true, longPressRight: true }),
+    ).toEqual([{ kind: 'click', button: 2 }]);
   });
 
   it('two- and three-finger taps', () => {
-    expect(run([ev('down', 1, 100, 100, 0), ev('down', 2, 150, 100, 20), ev('up', 1, 100, 100, 120), ev('up', 2, 150, 100, 130)]))
-      .toEqual([{ kind: 'click', button: 2 }]);
-    expect(kinds(run([
-      ev('down', 1, 100, 100, 0), ev('down', 2, 150, 100, 10), ev('down', 3, 200, 100, 20),
-      ev('up', 1, 100, 100, 150), ev('up', 2, 150, 100, 160), ev('up', 3, 200, 100, 170),
-    ]))).toEqual(['click4']);
+    expect(
+      run([
+        ev('down', 1, 100, 100, 0),
+        ev('down', 2, 150, 100, 20),
+        ev('up', 1, 100, 100, 120),
+        ev('up', 2, 150, 100, 130),
+      ]),
+    ).toEqual([{ kind: 'click', button: 2 }]);
+    expect(
+      kinds(
+        run([
+          ev('down', 1, 100, 100, 0),
+          ev('down', 2, 150, 100, 10),
+          ev('down', 3, 200, 100, 20),
+          ev('up', 1, 100, 100, 150),
+          ev('up', 2, 150, 100, 160),
+          ev('up', 3, 200, 100, 170),
+        ]),
+      ),
+    ).toEqual(['click4']);
   });
 
   it('one finger moves the pointer, and the slop is not a jump', () => {
-    const out = run([ev('down', 1, 100, 100, 0), ev('move', 1, 104, 100, 10), ev('move', 1, 120, 100, 20), ev('move', 1, 130, 110, 30), ev('up', 1, 130, 110, 40)]);
-    expect(out).toEqual([{ kind: 'move', dx: 16, dy: 0 }, { kind: 'move', dx: 10, dy: 10 }]);
+    const out = run([
+      ev('down', 1, 100, 100, 0),
+      ev('move', 1, 104, 100, 10),
+      ev('move', 1, 120, 100, 20),
+      ev('move', 1, 130, 110, 30),
+      ev('up', 1, 130, 110, 40),
+    ]);
+    expect(out).toEqual([
+      { kind: 'move', dx: 16, dy: 0 },
+      { kind: 'move', dx: 10, dy: 10 },
+    ]);
   });
 
   it('two fingers scroll by their average, and no click after', () => {
     const out = run([
-      ev('down', 1, 100, 100, 0), ev('down', 2, 150, 100, 5),
-      ev('move', 1, 100, 120, 20), ev('move', 2, 150, 120, 20),
-      ev('up', 1, 100, 120, 60), ev('move', 2, 150, 160, 70), ev('up', 2, 150, 160, 80),
+      ev('down', 1, 100, 100, 0),
+      ev('down', 2, 150, 100, 5),
+      ev('move', 1, 100, 120, 20),
+      ev('move', 2, 150, 120, 20),
+      ev('up', 1, 100, 120, 60),
+      ev('move', 2, 150, 160, 70),
+      ev('up', 2, 150, 160, 80),
     ]);
-    expect(out).toEqual([{ kind: 'scroll', dx: 0, dy: 10 }, { kind: 'scroll', dx: 0, dy: 10 }]);
+    expect(out).toEqual([
+      { kind: 'scroll', dx: 0, dy: 10 },
+      { kind: 'scroll', dx: 0, dy: 10 },
+    ]);
   });
 
   it('tap then touch-and-move drags, releasing on lift', () => {
     const out = run([
-      ev('down', 1, 100, 100, 0), ev('up', 1, 100, 100, 80),
-      ev('down', 1, 102, 101, 200), ev('move', 1, 130, 101, 260), ev('up', 1, 130, 101, 300),
+      ev('down', 1, 100, 100, 0),
+      ev('up', 1, 100, 100, 80),
+      ev('down', 1, 102, 101, 200),
+      ev('move', 1, 130, 101, 260),
+      ev('up', 1, 130, 101, 300),
     ]);
     expect(kinds(out)).toEqual(['click1', 'dragDown', 'move', 'dragUp']);
   });
 
   it('two quick taps are two clicks: a double click', () => {
-    const out = run([ev('down', 1, 100, 100, 0), ev('up', 1, 100, 100, 80), ev('down', 1, 101, 100, 200), ev('up', 1, 101, 100, 260)]);
+    const out = run([
+      ev('down', 1, 100, 100, 0),
+      ev('up', 1, 100, 100, 80),
+      ev('down', 1, 101, 100, 200),
+      ev('up', 1, 101, 100, 260),
+    ]);
     expect(kinds(out)).toEqual(['click1', 'click1']);
   });
 

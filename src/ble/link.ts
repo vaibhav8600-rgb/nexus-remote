@@ -7,7 +7,19 @@
 // one strict FIFO, because the dongle types keys and text from one ordered
 // queue and "type this, then Enter" must leave the phone in that order too.
 // A paste is one job in that FIFO, fed out as NEXUS reports room for it.
-import { CHAR, Ctrl, KeyAction, PROTOCOL_VERSION, SERVICE, decodeStatus, encodeControl, encodeKey, encodeMouse, type Bytes, type Status } from '../protocol/packets';
+import {
+  CHAR,
+  Ctrl,
+  KeyAction,
+  PROTOCOL_VERSION,
+  SERVICE,
+  decodeStatus,
+  encodeControl,
+  encodeKey,
+  encodeMouse,
+  type Bytes,
+  type Status,
+} from '../protocol/packets';
 import { chunks, sanitize } from '../protocol/text';
 
 export type LinkState = 'idle' | 'connecting' | 'connected' | 'reconnecting';
@@ -126,7 +138,10 @@ export class NexusLink {
       status.addEventListener('characteristicvaluechanged', this.onNotify);
       await status.startNotifications();
       if (this.status && this.status.version !== PROTOCOL_VERSION) {
-        this.set('idle', `This NEXUS speaks protocol ${this.status.version}; the app speaks ${PROTOCOL_VERSION}. Update one of them.`);
+        this.set(
+          'idle',
+          `This NEXUS speaks protocol ${this.status.version}; the app speaks ${PROTOCOL_VERSION}. Update one of them.`,
+        );
         device.gatt.disconnect();
         return;
       }
@@ -219,7 +234,9 @@ export class NexusLink {
       while (this.state === 'connected') {
         const m = this.mouse.shift();
         if (m) {
-          await this.chars.mouse!.writeValueWithoutResponse(encodeMouse(m.buttons, m.dx, m.dy, m.wheel, m.hwheel)).catch(() => undefined);
+          await this.chars
+            .mouse!.writeValueWithoutResponse(encodeMouse(m.buttons, m.dx, m.dy, m.wheel, m.hwheel))
+            .catch(() => undefined);
           continue;
         }
         const job = this.jobs[0];

@@ -46,8 +46,7 @@ export class Gestures {
         this.fingers = 0;
         this.moved = false;
         this.dragArmed =
-          e.t - this.lastTap.t < DOUBLE_MS &&
-          Math.hypot(e.x - this.lastTap.x, e.y - this.lastTap.y) < DOUBLE_PX;
+          e.t - this.lastTap.t < DOUBLE_MS && Math.hypot(e.x - this.lastTap.x, e.y - this.lastTap.y) < DOUBLE_PX;
       }
       this.pts.set(e.id, { x: e.x, y: e.y, sx: e.x, sy: e.y });
       this.fingers = Math.max(this.fingers, this.pts.size);

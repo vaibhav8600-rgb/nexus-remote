@@ -1,23 +1,17 @@
-import { useEffect, useMemo, useState, useSyncExternalStore, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from 'react';
 import { NexusLink, link } from './ble/link';
 import { MouseSender } from './ble/mouse';
-import { GearIcon, KeyboardIcon, MediaIcon, TrackpadIcon } from './icons';
+import { ChevronRight, KeyboardIcon, MediaIcon, MenuIcon, MonitorIcon, WindowIcon } from './icons';
 import { NO_MODS, consumeMods, tapMod, type ModState } from './protocol/mods';
 import { Ctrl, Page } from './protocol/packets';
-import { Keyboard } from './screens/Keyboard';
-import { Media } from './screens/Media';
-import { SettingsScreen } from './screens/Settings';
+import { KeyStrip, LiveInput } from './screens/KeyboardBar';
+import { KeysPanel } from './screens/KeysPanel';
+import { MediaPanel } from './screens/MediaPanel';
+import { SettingsSheet } from './screens/Settings';
 import { Trackpad } from './screens/Trackpad';
 import { haptic, useSettings } from './settings';
 
-type Tab = 'pad' | 'keys' | 'media' | 'settings';
-
-const TABS: { id: Tab; title: string; icon: ReactNode }[] = [
-  { id: 'pad', title: 'Trackpad', icon: <TrackpadIcon /> },
-  { id: 'keys', title: 'Keyboard', icon: <KeyboardIcon /> },
-  { id: 'media', title: 'Media', icon: <MediaIcon /> },
-  { id: 'settings', title: 'Settings', icon: <GearIcon /> },
-];
+type Panel = 'none' | 'keyboard' | 'media' | 'keys';
 
 export interface Ctx {
   mouse: MouseSender;
@@ -43,8 +37,7 @@ function useTheme(choice: 'auto' | 'light' | 'dark') {
     const apply = () => {
       const dark = choice === 'dark' || (choice === 'auto' && media.matches);
       document.documentElement.dataset.theme = dark ? 'dark' : 'light';
-      // The status bar and the browser chrome follow the page.
-      document.querySelector('meta[name="theme-color"]')?.setAttribute('content', dark ? '#000000' : '#f2f2f7');
+      document.querySelector('meta[name="theme-color"]')?.setAttribute('content', dark ? '#0b1f12' : '#5fb35a');
     };
     apply();
     media.addEventListener('change', apply);
@@ -52,12 +45,55 @@ function useTheme(choice: 'auto' | 'light' | 'dark') {
   }, [choice]);
 }
 
+/**
+ * Size the app to the part of the screen the phone keyboard leaves, so the
+ * toolbar rides on top of the keyboard. Android Chrome resizes the page
+ * itself; iOS only reports it through visualViewport.
+ */
+function useVisibleViewport() {
+  useEffect(() => {
+    const vv = window.visualViewport;
+    if (!vv) return;
+    const root = document.documentElement.style;
+    const fit = () => {
+      root.setProperty('--app-h', `${vv.height}px`);
+      root.setProperty('--app-top', `${vv.offsetTop}px`);
+    };
+    fit();
+    vv.addEventListener('resize', fit);
+    vv.addEventListener('scroll', fit);
+    return () => {
+      vv.removeEventListener('resize', fit);
+      vv.removeEventListener('scroll', fit);
+    };
+  }, []);
+}
+
+/** The last few characters typed, shown on the pad and gone after a pause. */
+function useEcho(): [string, (added: string, erased: number) => void] {
+  const [echo, setEcho] = useState('');
+  const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const push = (added: string, erased: number) => {
+    setEcho((e) => {
+      if (added === '\n') return '';
+      return (e.slice(0, Math.max(0, e.length - erased)) + added).slice(-24);
+    });
+    clearTimeout(timer.current);
+    timer.current = setTimeout(() => setEcho(''), 2000);
+  };
+  return [echo, push];
+}
+
 export function App() {
   useLink();
   const settings = useSettings();
   useTheme(settings.theme);
-  const [tab, setTab] = useState<Tab>('pad');
+  useVisibleViewport();
+  const [panel, setPanel] = useState<Panel>('none');
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [mods, setMods] = useState<ModState>(NO_MODS);
+  const [echo, pushEcho] = useEcho();
+  const input = useRef<HTMLInputElement>(null);
   const mouse = useMemo(() => new MouseSender(link), []);
 
   // Reconnect on launch and whenever the app returns to the foreground; the
@@ -83,7 +119,10 @@ export function App() {
     let lock: WakeLockSentinel | undefined;
     const take = () => {
       if (document.visibilityState === 'visible') {
-        navigator.wakeLock.request('screen').then((l) => (lock = l), () => undefined);
+        navigator.wakeLock.request('screen').then(
+          (l) => (lock = l),
+          () => undefined,
+        );
       }
     };
     take();
@@ -114,78 +153,104 @@ export function App() {
     },
   };
 
-  const current = TABS.find((t) => t.id === tab)!;
+  const toggle = (p: Panel) => {
+    haptic();
+    const next = panel === p ? 'none' : p;
+    // Focus inside the tap itself: phones only raise the keyboard for a
+    // focus that comes straight from a user gesture.
+    if (next === 'keyboard') input.current?.focus();
+    else input.current?.blur();
+    setPanel(next);
+  };
+
+  const tool = (p: Panel | 'settings', label: string, icon: ReactNode) => (
+    <button
+      aria-label={label}
+      aria-pressed={p === 'settings' ? settingsOpen : panel === p}
+      className={(p === 'settings' ? settingsOpen : panel === p) ? 'on' : ''}
+      onPointerDown={(e) => p === 'keyboard' && e.preventDefault() /* keep focus where it is */}
+      onClick={() => {
+        if (p === 'settings') {
+          input.current?.blur();
+          setSettingsOpen(true);
+        } else toggle(p);
+      }}
+    >
+      {icon}
+    </button>
+  );
+
+  const typing = link.textPending > 0 || !!link.status?.typing;
 
   return (
     <div className="app">
-      <NavBar title={current.title} />
-      <main className={tab === 'pad' ? 'content fill' : 'content'}>
-        {tab === 'pad' && <Trackpad ctx={ctx} />}
-        {tab === 'keys' && <Keyboard ctx={ctx} />}
-        {tab === 'media' && <Media ctx={ctx} />}
-        {tab === 'settings' && <SettingsScreen />}
-      </main>
-      <nav className="tab-bar" role="tablist">
-        {TABS.map((t) => (
-          <button
-            key={t.id}
-            role="tab"
-            aria-selected={t.id === tab}
-            className={t.id === tab ? 'selected' : ''}
-            onClick={() => setTab(t.id)}
-          >
-            <span className="tab-icon">{t.icon}</span>
-            <span className="tab-label">{t.title}</span>
-          </button>
-        ))}
+      <div className="wallpaper" aria-hidden="true" />
+
+      <header className="top">
+        <DevicePill onOpen={() => setSettingsOpen(true)} />
+        {link.error && <p className="toast error">{link.error}</p>}
+      </header>
+
+      <Trackpad ctx={ctx} echo={echo} buttons={panel !== 'media' && panel !== 'keys'} />
+
+      {typing && (
+        <div className="typing">
+          <span>Typing{link.textPending ? ` · ${link.textPending} left` : '…'}</span>
+          <button onClick={() => link.cancelText()}>Cancel</button>
+        </div>
+      )}
+
+      {panel === 'media' && <MediaPanel ctx={ctx} onClose={() => setPanel('none')} />}
+      {panel === 'keys' && <KeysPanel ctx={ctx} />}
+      {panel === 'keyboard' && <KeyStrip ctx={ctx} />}
+
+      <nav className="toolbar">
+        {tool('settings', 'Settings', <MenuIcon />)}
+        <span className="toolbar-divider" />
+        {tool('media', 'Media controls', <MediaIcon />)}
+        {tool('keys', 'Shortcuts and keys', <WindowIcon />)}
+        {tool('keyboard', 'Keyboard', <KeyboardIcon />)}
+        <LiveInput
+          ref={input}
+          ctx={ctx}
+          onEcho={pushEcho}
+          onBlur={() => setPanel((p) => (p === 'keyboard' ? 'none' : p))}
+        />
       </nav>
+
+      {settingsOpen && <SettingsSheet onClose={() => setSettingsOpen(false)} />}
     </div>
   );
 }
 
-function NavBar({ title }: { title: string }) {
+/** Which NEXUS, in a glass pill at the top; tap to connect or for settings. */
+function DevicePill({ onOpen }: { onOpen: () => void }) {
   const s = link.status;
-  const connected = link.state === 'connected';
-
-  let status = 'Not Connected';
+  let label = 'Tap to connect';
   let tone = '';
   if (!NexusLink.supported()) {
-    status = 'Bluetooth unavailable in this browser';
+    label = 'Open in Chrome, or Bluefy on iPhone';
     tone = 'warn';
-  } else if (link.state === 'connecting') status = 'Connecting…';
-  else if (link.state === 'reconnecting') status = 'Reconnecting…';
-  else if (connected && !s?.remoteOn) {
-    status = 'Remote input is off on NEXUS';
-    tone = 'warn';
-  } else if (connected) {
-    status = link.name || 'Connected';
-    tone = 'ok';
+  } else if (link.state === 'connecting') label = 'Connecting…';
+  else if (link.state === 'reconnecting') label = 'Reconnecting…';
+  else if (link.state === 'connected') {
+    label = link.name || 'NEXUS Remote';
+    tone = s?.remoteOn ? 'ok' : 'warn';
   }
 
+  const onClick = () => {
+    haptic();
+    if (link.state === 'idle' && NexusLink.supported()) void link.pick();
+    else onOpen();
+  };
+
   return (
-    <header className="nav-bar">
-      <div className="nav-top">
-        <span className={`status ${tone}`}>
-          <span className="status-dot" />
-          {status}
-          {connected && s?.capsLock && <span className="badge">Caps Lock</span>}
-        </span>
-        {NexusLink.supported() &&
-          (link.state === 'idle' ? (
-            <button className="nav-button" onClick={() => void link.pick()}>
-              Connect
-            </button>
-          ) : (
-            <button className="nav-button" onClick={() => link.disconnect()}>
-              Disconnect
-            </button>
-          ))}
-      </div>
-      <h1 className="large-title">{title}</h1>
-      {!NexusLink.supported() && (
-        <p className="banner">Use Chrome on Android, or the Bluefy browser on iPhone - Safari has no Web Bluetooth.</p>
-      )}
-      {link.error && <p className="banner error">{link.error}</p>}
-    </header>
+    <button className={`device-pill ${tone}`} onClick={onClick}>
+      <MonitorIcon />
+      <span className="device-name">{label}</span>
+      {link.state === 'connected' && !s?.remoteOn && <span className="device-note">Remote off</span>}
+      {link.state === 'connected' && s?.capsLock && <span className="device-note">Caps</span>}
+      <ChevronRight />
+    </button>
   );
 }

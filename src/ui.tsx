@@ -26,7 +26,11 @@ export function Row(props: { label: ReactNode; children?: ReactNode; stack?: boo
 /** A tappable cell with a tinted label - "Identify", "Forget This Device". */
 export function ActionRow(props: { label: string; onClick: () => void; destructive?: boolean; disabled?: boolean }) {
   return (
-    <button className={`cell action${props.destructive ? ' destructive' : ''}`} onClick={props.onClick} disabled={props.disabled}>
+    <button
+      className={`cell action${props.destructive ? ' destructive' : ''}`}
+      onClick={props.onClick}
+      disabled={props.disabled}
+    >
       {props.label}
     </button>
   );

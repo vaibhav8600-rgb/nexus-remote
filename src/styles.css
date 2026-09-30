@@ -1,7 +1,8 @@
 /*
  * Apple's design language, from the Human Interface Guidelines: the system
- * font, iOS system colours for light and dark, inset grouped lists, bars in
- * a translucent material, and a 44pt minimum touch target throughout.
+ * font, iOS system colours for light and dark, glass materials over a soft
+ * wallpaper, inset grouped lists in the settings sheet, and a 44pt minimum
+ * touch target throughout.
  *
  * The theme is data-theme on <html>, set by App from Settings > Theme:
  * Automatic follows the phone, Light and Dark override it.
@@ -109,135 +110,6 @@ button:disabled {
   * {
     transition: none !important;
   }
-}
-
-/* ---- layout and bars --------------------------------------------------- */
-.app {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-}
-
-.nav-bar {
-  position: sticky;
-  top: 0;
-  z-index: 2;
-  padding: env(safe-area-inset-top) max(16px, env(safe-area-inset-right)) 8px max(16px, env(safe-area-inset-left));
-  background: var(--material);
-  -webkit-backdrop-filter: saturate(180%) blur(20px);
-  backdrop-filter: saturate(180%) blur(20px);
-  border-bottom: 0.5px solid var(--separator);
-}
-.nav-top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  min-height: 44px;
-}
-.nav-button {
-  color: var(--blue);
-  font-size: 17px;
-  min-height: 44px;
-  padding: 0 4px;
-}
-.nav-button:active {
-  opacity: 0.3;
-}
-.large-title {
-  margin: 0;
-  font-size: 34px;
-  line-height: 41px;
-  font-weight: 700;
-  letter-spacing: 0.01em;
-}
-.status {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 15px;
-  color: var(--secondary);
-  min-width: 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.status-dot {
-  flex: none;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--tertiary);
-}
-.status.ok .status-dot {
-  background: var(--green);
-}
-.status.warn .status-dot {
-  background: var(--orange);
-}
-.badge {
-  flex: none;
-  font-size: 12px;
-  font-weight: 600;
-  padding: 2px 7px;
-  border-radius: 6px;
-  background: var(--fill-3);
-  color: var(--label);
-}
-.banner {
-  margin: 8px 0 0;
-  padding: 10px 12px;
-  border-radius: 10px;
-  background: color-mix(in srgb, var(--orange) 14%, transparent);
-  font-size: 15px;
-}
-.banner.error {
-  background: color-mix(in srgb, var(--red) 14%, transparent);
-  color: var(--red);
-}
-
-.content {
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-  padding: 8px max(16px, env(safe-area-inset-right)) 24px max(16px, env(safe-area-inset-left));
-}
-.content.fill {
-  display: flex;
-  overflow: hidden;
-  padding-bottom: 12px;
-}
-
-.tab-bar {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  padding: 0 env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
-  background: var(--material);
-  -webkit-backdrop-filter: saturate(180%) blur(20px);
-  backdrop-filter: saturate(180%) blur(20px);
-  border-top: 0.5px solid var(--separator);
-}
-.tab-bar button {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-  padding: 7px 0 5px;
-  min-height: 49px;
-  color: var(--secondary);
-}
-.tab-bar button.selected {
-  color: var(--blue);
-}
-.tab-icon {
-  font-size: 26px;
-  line-height: 0;
-}
-.tab-label {
-  font-size: 10px;
-  font-weight: 500;
-  letter-spacing: 0.01em;
 }
 
 /* ---- inset grouped lists ----------------------------------------------- */
@@ -461,239 +333,503 @@ button.cell:active:not(:disabled) {
   background: var(--blue);
 }
 
-/* Capsules that tint when armed and fill when locked: sticky modifiers. */
-.mods {
-  display: flex;
-  gap: 8px;
-  width: 100%;
+/* ---- the remote: wallpaper, glass, one screen -------------------------- */
+:root,
+:root[data-theme='light'] {
+  --wall-1: #7cc576;
+  --wall-2: #3f9a4a;
+  --wall-3: #bfe6ff;
+  --glass: rgba(255, 255, 255, 0.72);
+  --glass-soft: rgba(255, 255, 255, 0.28);
+  --glass-line: rgba(255, 255, 255, 0.55);
+  --on-wall: #ffffff;
+  --tint: #2f9e44; /* the selected tool */
+  --bar: rgba(247, 247, 247, 0.86);
 }
-.pill {
-  flex: 1;
-  min-height: 36px;
-  padding: 0 8px;
-  border-radius: 18px;
-  background: var(--fill-3);
-  font-size: 15px;
-  font-weight: 500;
-  white-space: nowrap;
-  transition: background-color 0.15s, color 0.15s;
-}
-.pill.armed {
-  background: color-mix(in srgb, var(--blue) 18%, transparent);
-  color: var(--blue);
-}
-.pill.locked {
-  background: var(--blue);
-  color: #fff;
+:root[data-theme='dark'] {
+  --wall-1: #1f4d2a;
+  --wall-2: #0b1f12;
+  --wall-3: #1d3b52;
+  --glass: rgba(44, 44, 46, 0.78);
+  --glass-soft: rgba(255, 255, 255, 0.09);
+  --glass-line: rgba(255, 255, 255, 0.16);
+  --on-wall: rgba(255, 255, 255, 0.9);
+  --tint: #30d158;
+  --bar: rgba(28, 28, 30, 0.86);
 }
 
-.keycap {
-  min-height: 44px;
-  min-width: 48px;
-  padding: 0 10px;
-  border-radius: 8px;
-  background: var(--cell);
-  box-shadow: 0 1px 0 var(--tertiary);
-  font-size: 15px;
-  font-weight: 500;
-}
-.keycap:active {
-  background: var(--cell-pressed);
-}
-.keygrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
-  gap: 8px;
-  padding: 12px;
-  background: var(--fill-3);
-}
-.keygrid .keycap {
-  min-width: 0;
-}
-.chips {
+.app {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: var(--app-top, 0);
+  height: var(--app-h, 100dvh);
   display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  padding: 12px 16px;
+  flex-direction: column;
+  overflow: hidden;
 }
-.chip {
-  min-height: 34px;
-  padding: 0 14px;
-  border-radius: 17px;
-  background: var(--fill-3);
-  color: var(--blue);
+
+/* A defocused photo, made of light: nothing to download, sharp at any size. */
+.wallpaper {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    radial-gradient(60% 45% at 12% 88%, var(--wall-3) 0%, transparent 70%),
+    radial-gradient(70% 55% at 85% 20%, var(--wall-1) 0%, transparent 75%),
+    radial-gradient(90% 70% at 30% 35%, var(--wall-1) 0%, transparent 80%),
+    var(--wall-2);
+}
+
+.top {
+  padding: calc(env(safe-area-inset-top) + 8px) max(10px, env(safe-area-inset-right)) 0 max(10px, env(safe-area-inset-left));
+}
+.device-pill {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 44px;
+  padding: 0 12px;
+  border-radius: 12px;
+  background: var(--glass-soft);
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+  color: var(--on-wall);
   font-size: 15px;
-  font-weight: 500;
+  text-align: left;
 }
-.chip:active {
-  background: var(--fill);
+.device-pill svg {
+  flex: none;
+  font-size: 20px;
+  opacity: 0.9;
+}
+.device-pill:active {
+  background: var(--glass-line);
+}
+.device-name {
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.device-note {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 6px;
+  background: var(--glass-soft);
+}
+.device-pill.warn .device-note {
+  background: rgba(255, 149, 0, 0.85);
+  color: #fff;
+}
+.toast {
+  margin: 8px 0 0;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--glass);
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+  font-size: 15px;
+}
+.toast.error {
+  color: var(--red);
 }
 
 /* ---- trackpad ---------------------------------------------------------- */
-.pad-screen {
+.surface {
+  position: relative;
   flex: 1;
+  min-height: 0;
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  min-height: 0;
-  min-width: 0; /* or the key strip's width becomes the screen's */
 }
 .pad {
   flex: 1;
-  min-height: 180px;
+  min-height: 0;
   display: grid;
   place-items: center;
-  border-radius: 22px;
-  background: var(--cell);
-  box-shadow: inset 0 0 0 0.5px var(--separator);
   touch-action: none;
   user-select: none;
   -webkit-user-select: none;
   -webkit-touch-callout: none;
 }
 .pad-hint {
-  color: var(--tertiary);
+  color: var(--on-wall);
+  opacity: 0.75;
   font-size: 15px;
   pointer-events: none;
 }
-.button-row {
-  display: flex;
-  gap: 12px;
-}
-.mouse-buttons {
-  flex: 1;
-  display: grid;
-  grid-template-columns: 1fr 0.45fr 1fr;
-  border-radius: 14px;
+.echo {
+  max-width: 80%;
+  color: var(--on-wall);
+  font-size: 28px;
+  font-weight: 500;
+  text-shadow: 0 1px 12px rgba(0, 0, 0, 0.18);
+  white-space: pre;
   overflow: hidden;
-  background: var(--cell);
+  pointer-events: none;
 }
-.mouse-buttons button {
-  min-height: 52px;
+
+/* The side strip: a wheel you drag, with a notch up and down at its ends. */
+.scroll-strip {
+  position: absolute;
+  top: 16px;
+  right: max(8px, env(safe-area-inset-right));
+  bottom: 84px;
+  width: 44px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  border-radius: 12px;
+  background: var(--glass-soft);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
   touch-action: none;
 }
-.mouse-buttons button + button {
-  border-left: 0.5px solid var(--separator);
+.scroll-strip.full {
+  bottom: 16px;
+}
+.scroll-strip button {
+  height: 52px;
+  font-size: 18px;
+  color: var(--on-wall);
+}
+.scroll-strip button:active {
+  opacity: 0.4;
+}
+
+.mouse-buttons {
+  display: grid;
+  grid-template-columns: 1fr 0.35fr 1fr;
+  gap: 2px;
+  height: 64px;
+  margin: 0 max(4px, env(safe-area-inset-right)) 4px max(4px, env(safe-area-inset-left));
+}
+.mouse-buttons button {
+  background: var(--glass);
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+  touch-action: none;
+  transition: background-color 0.1s;
+}
+.mouse-buttons button:first-child {
+  border-radius: 10px 4px 4px 10px;
+}
+.mouse-buttons button:nth-child(2) {
+  border-radius: 4px;
+}
+.mouse-buttons button:last-child {
+  border-radius: 4px 10px 10px 4px;
 }
 .mouse-buttons button:active {
-  background: var(--cell-pressed);
+  background: var(--glass-line);
 }
-.round-toggle {
-  flex: none;
-  width: 52px;
-  height: 52px;
-  border-radius: 50%;
-  background: var(--cell);
+
+.typing {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0 10px 6px;
+  padding: 6px 6px 6px 14px;
+  border-radius: 12px;
+  background: var(--glass);
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+  font-size: 15px;
+}
+.typing button {
+  color: var(--red);
+  min-height: 32px;
+  padding: 0 8px;
+}
+
+/* ---- toolbar ----------------------------------------------------------- */
+.toolbar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  padding: 0 max(8px, env(safe-area-inset-right)) env(safe-area-inset-bottom) max(8px, env(safe-area-inset-left));
+  background: var(--bar);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  backdrop-filter: saturate(180%) blur(20px);
+  border-top: 0.5px solid var(--separator);
+}
+.toolbar button {
+  flex: 1;
+  height: 48px;
+  font-size: 24px;
   color: var(--secondary);
-  font-size: 22px;
   display: grid;
   place-items: center;
-  transition: background-color 0.15s, color 0.15s;
 }
-.round-toggle.on {
-  background: var(--blue);
-  color: #fff;
+.toolbar button.on {
+  color: var(--tint);
 }
-.strip {
+.toolbar button:active {
+  opacity: 0.4;
+}
+.toolbar-divider {
+  width: 0.5px;
+  height: 26px;
+  background: var(--separator);
+}
+/* Focusable - a phone will not raise its keyboard for a hidden field - but
+ * invisible, and too small to catch a tap. */
+.live-input {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  border: 0;
+  padding: 0;
+  font-size: 16px; /* under 16px, iOS zooms the page on focus */
+}
+
+/* Keys a phone keyboard lacks, above it. */
+.key-strip {
   display: flex;
-  gap: 8px;
+  gap: 6px;
   overflow-x: auto;
   scrollbar-width: none;
-  margin: 0 -16px;
-  padding: 2px 16px;
+  padding: 6px max(8px, env(safe-area-inset-right)) 6px max(8px, env(safe-area-inset-left));
+  background: var(--bar);
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+  border-top: 0.5px solid var(--separator);
 }
-.strip::-webkit-scrollbar {
+.key-strip::-webkit-scrollbar {
   display: none;
 }
-.strip .keycap {
+.key-strip button {
   flex: none;
-}
-
-/* ---- media ------------------------------------------------------------- */
-.media {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-.media-card {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  padding: 16px;
-  border-radius: 22px;
+  min-width: 44px;
+  height: 36px;
+  padding: 0 10px;
+  border-radius: 7px;
   background: var(--cell);
+  box-shadow: 0 1px 0 var(--tertiary);
+  font-size: 15px;
+  font-weight: 500;
 }
-.media-card.transport {
-  flex-direction: row;
-  justify-content: space-evenly;
-  align-items: center;
-  padding: 24px 16px;
+.key-strip button:active {
+  background: var(--cell-pressed);
 }
-.media-caption {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--secondary);
+.key-strip button.armed {
+  background: color-mix(in srgb, var(--tint) 22%, var(--cell));
+  color: var(--tint);
 }
-.media-row {
-  display: flex;
-  justify-content: space-evenly;
-}
-.media-button {
-  width: 64px;
-  height: 64px;
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-  font-size: 28px;
-  background: var(--fill-3);
-  transition: transform 0.1s, background-color 0.15s;
-}
-.media-button.big {
-  width: 84px;
-  height: 84px;
-  font-size: 38px;
-  background: var(--blue);
+.key-strip button.locked {
+  background: var(--tint);
   color: #fff;
 }
-.media-button:active {
-  transform: scale(0.92);
-  background: var(--fill);
-}
-.media-button.big:active {
-  background: var(--blue);
-  opacity: 0.8;
+.key-strip .divider {
+  flex: none;
+  width: 0.5px;
+  margin: 4px 2px;
+  background: var(--separator);
 }
 
-/* Landscape phones: the trackpad beside its controls. */
-@media (orientation: landscape) and (max-height: 500px) {
-  .large-title {
-    display: none;
+/* ---- media: a click wheel ---------------------------------------------- */
+.media-panel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  padding: 16px max(16px, env(safe-area-inset-right)) 16px max(16px, env(safe-area-inset-left));
+  background: var(--glass-soft);
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+}
+.wheel {
+  position: relative;
+  flex: none;
+  width: 220px;
+  height: 220px;
+  border-radius: 50%;
+  background: var(--glass);
+  box-shadow: var(--shadow);
+}
+.wheel-zone {
+  position: absolute;
+  width: 64px;
+  height: 64px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  font-size: 22px;
+  color: var(--secondary);
+}
+.wheel-zone:active {
+  background: var(--fill-3);
+}
+.wheel-zone.top {
+  top: 4px;
+  left: 78px;
+}
+.wheel-zone.bottom {
+  bottom: 4px;
+  left: 78px;
+}
+.wheel-zone.left {
+  left: 4px;
+  top: 78px;
+}
+.wheel-zone.right {
+  right: 4px;
+  top: 78px;
+}
+.wheel-center {
+  position: absolute;
+  inset: 62px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  font-size: 28px;
+  background: var(--cell);
+  box-shadow: inset 0 0 0 0.5px var(--separator), var(--shadow);
+}
+.wheel-center:active {
+  background: var(--cell-pressed);
+}
+.side-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.round {
+  width: 52px;
+  height: 52px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  font-size: 22px;
+  background: var(--glass);
+  box-shadow: var(--shadow);
+}
+.round:active {
+  background: var(--cell-pressed);
+}
+
+/* ---- shortcuts and keys ------------------------------------------------ */
+.keys-panel {
+  max-height: 46%;
+  overflow-y: auto;
+  padding: 12px max(12px, env(safe-area-inset-right)) 12px max(12px, env(safe-area-inset-left));
+  background: var(--bar);
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+  border-top: 0.5px solid var(--separator);
+}
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  gap: 8px;
+}
+.tiles.keys {
+  grid-template-columns: repeat(auto-fill, minmax(58px, 1fr));
+  margin-top: 16px;
+}
+.tile {
+  min-height: 44px;
+  padding: 0 8px;
+  border-radius: 10px;
+  background: var(--cell);
+  box-shadow: 0 1px 0 var(--tertiary);
+  font-size: 15px;
+  font-weight: 500;
+}
+.tile:active {
+  background: var(--cell-pressed);
+}
+
+/* ---- settings sheet ---------------------------------------------------- */
+.sheet-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  align-items: flex-end;
+  background: rgba(0, 0, 0, 0.32);
+  animation: fade 0.25s ease-out;
+}
+.sheet {
+  width: 100%;
+  max-height: calc(100% - env(safe-area-inset-top) - 12px);
+  display: flex;
+  flex-direction: column;
+  border-radius: 12px 12px 0 0;
+  background: var(--bg);
+  animation: rise 0.35s cubic-bezier(0.2, 0.9, 0.3, 1);
+}
+.sheet-grabber {
+  width: 36px;
+  height: 5px;
+  margin: 6px auto 0;
+  border-radius: 3px;
+  background: var(--tertiary);
+}
+.sheet-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 16px 8px;
+}
+.sheet-header h1 {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 700;
+}
+.text-button.bold {
+  font-weight: 600;
+}
+.sheet-body {
+  overflow-y: auto;
+  padding: 8px max(16px, env(safe-area-inset-right)) calc(24px + env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+}
+@keyframes rise {
+  from {
+    transform: translateY(100%);
   }
-  .pad-screen {
-    display: grid;
-    grid-template-columns: 1fr minmax(260px, 38%);
-    grid-auto-rows: min-content;
-    align-content: start;
-  }
-  .pad {
-    grid-row: 1 / span 3;
-    height: 100%;
-  }
-  .strip {
-    flex-wrap: wrap;
-    margin: 0;
-    padding: 0;
+}
+@keyframes fade {
+  from {
+    opacity: 0;
   }
 }
 
-/* Tablets and desktop browsers: keep lists readable, not edge to edge. */
+/* Tablets and desktop browsers: a floating sheet, not an edge-to-edge one. */
 @media (min-width: 720px) {
-  .content > * {
-    max-width: 680px;
-    margin-left: auto;
-    margin-right: auto;
+  .sheet {
+    max-width: 560px;
+    margin: 0 auto 24px;
+    border-radius: 12px;
   }
-  .content.fill > * {
-    max-width: none;
+}
+
+/* Landscape phones: a smaller wheel, a taller keys panel. */
+@media (orientation: landscape) and (max-height: 500px) {
+  .wheel {
+    width: 170px;
+    height: 170px;
+  }
+  .wheel-zone.top,
+  .wheel-zone.bottom {
+    left: 53px;
+  }
+  .wheel-zone.left,
+  .wheel-zone.right {
+    top: 53px;
+  }
+  .wheel-center {
+    inset: 50px;
+  }
+  .keys-panel {
+    max-height: 55%;
   }
 }
