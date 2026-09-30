@@ -334,28 +334,47 @@ button.cell:active:not(:disabled) {
 }
 
 /* ---- the remote: wallpaper, glass, one screen -------------------------- */
+/*
+ * The NEXUS palette, from the dongle's own default theme: a deep indigo
+ * night lit by magenta and cyan, with mint as the accent. Light is the same
+ * light at noon - lavender, with the glows turned to pastel.
+ */
 :root,
 :root[data-theme='light'] {
-  --wall-1: #7cc576;
-  --wall-2: #3f9a4a;
-  --wall-3: #bfe6ff;
+  --wall-top: #f1edff;
+  --wall-bot: #dcd4ff;
+  --glow-a: rgba(214, 51, 255, 0.32);
+  --glow-b: rgba(0, 224, 255, 0.34);
+  --glow-c: rgba(92, 255, 192, 0.22);
   --glass: rgba(255, 255, 255, 0.72);
-  --glass-soft: rgba(255, 255, 255, 0.28);
-  --glass-line: rgba(255, 255, 255, 0.55);
-  --on-wall: #ffffff;
-  --tint: #2f9e44; /* the selected tool */
-  --bar: rgba(247, 247, 247, 0.86);
+  --glass-soft: rgba(255, 255, 255, 0.46);
+  --glass-line: rgba(255, 255, 255, 0.9);
+  --on-wall: #1d1a3a;
+  --tint: #6d4aff;
+  --tint-on: #ffffff;
+  --bar: rgba(250, 249, 255, 0.84);
+  --kb-bg: #d3d2dc;
+  --kb-key: #ffffff;
+  --kb-special: #abaab9;
+  --kb-shadow: 0 1px 0 rgba(0, 0, 0, 0.3);
 }
 :root[data-theme='dark'] {
-  --wall-1: #1f4d2a;
-  --wall-2: #0b1f12;
-  --wall-3: #1d3b52;
-  --glass: rgba(44, 44, 46, 0.78);
-  --glass-soft: rgba(255, 255, 255, 0.09);
-  --glass-line: rgba(255, 255, 255, 0.16);
-  --on-wall: rgba(255, 255, 255, 0.9);
-  --tint: #30d158;
-  --bar: rgba(28, 28, 30, 0.86);
+  --wall-top: #0b0b1e;
+  --wall-bot: #05050c;
+  --glow-a: rgba(214, 51, 255, 0.3);
+  --glow-b: rgba(0, 224, 255, 0.2);
+  --glow-c: rgba(92, 255, 192, 0.07);
+  --glass: rgba(191, 212, 255, 0.14);
+  --glass-soft: rgba(191, 212, 255, 0.08);
+  --glass-line: rgba(191, 212, 255, 0.26);
+  --on-wall: rgba(255, 255, 255, 0.92);
+  --tint: #5cffc0;
+  --tint-on: #05050c;
+  --bar: rgba(16, 16, 32, 0.86);
+  --kb-bg: #1b1b2a;
+  --kb-key: #4a4a5c;
+  --kb-special: #2e2e40;
+  --kb-shadow: 0 1px 0 rgba(0, 0, 0, 0.6);
 }
 
 .app {
@@ -375,10 +394,10 @@ button.cell:active:not(:disabled) {
   inset: 0;
   z-index: -1;
   background:
-    radial-gradient(60% 45% at 12% 88%, var(--wall-3) 0%, transparent 70%),
-    radial-gradient(70% 55% at 85% 20%, var(--wall-1) 0%, transparent 75%),
-    radial-gradient(90% 70% at 30% 35%, var(--wall-1) 0%, transparent 80%),
-    var(--wall-2);
+    radial-gradient(55% 40% at 88% 10%, var(--glow-a) 0%, transparent 72%),
+    radial-gradient(65% 45% at 6% 94%, var(--glow-b) 0%, transparent 72%),
+    radial-gradient(80% 60% at 35% 45%, var(--glow-c) 0%, transparent 75%),
+    linear-gradient(var(--wall-top), var(--wall-bot));
 }
 
 .top {
@@ -467,7 +486,6 @@ button.cell:active:not(:disabled) {
   color: var(--on-wall);
   font-size: 28px;
   font-weight: 500;
-  text-shadow: 0 1px 12px rgba(0, 0, 0, 0.18);
   white-space: pre;
   overflow: hidden;
   pointer-events: none;
@@ -577,19 +595,6 @@ button.cell:active:not(:disabled) {
   height: 26px;
   background: var(--separator);
 }
-/* Focusable - a phone will not raise its keyboard for a hidden field - but
- * invisible, and too small to catch a tap. */
-.live-input {
-  position: absolute;
-  left: 0;
-  bottom: 0;
-  width: 1px;
-  height: 1px;
-  opacity: 0;
-  border: 0;
-  padding: 0;
-  font-size: 16px; /* under 16px, iOS zooms the page on focus */
-}
 
 /* Keys a phone keyboard lacks, above it. */
 .key-strip {
@@ -626,7 +631,7 @@ button.cell:active:not(:disabled) {
 }
 .key-strip button.locked {
   background: var(--tint);
-  color: #fff;
+  color: var(--tint-on);
 }
 .key-strip .divider {
   flex: none;
@@ -831,5 +836,122 @@ button.cell:active:not(:disabled) {
   }
   .keys-panel {
     max-height: 55%;
+  }
+}
+
+/* ---- the keyboard: a phone keyboard that sends real keys --------------- */
+.kb-open .toolbar {
+  padding-bottom: 0;
+}
+.keyboard {
+  background: var(--kb-bg);
+  padding-bottom: env(safe-area-inset-bottom);
+  user-select: none;
+  -webkit-user-select: none;
+}
+.keyboard .key-strip {
+  background: transparent;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+.keyboard .key-strip button {
+  background: var(--kb-special);
+  box-shadow: var(--kb-shadow);
+}
+.keyboard .key-strip button.armed {
+  background: var(--kb-key);
+  color: var(--tint);
+}
+.keyboard .key-strip button.locked {
+  background: var(--tint);
+  color: var(--tint-on);
+}
+.qwerty {
+  /* One letter key: ten per row, six-point gaps, three-point margins. */
+  --k: calc((100vw - 6px - 54px) / 10);
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+  padding: 4px 3px 6px;
+}
+.kb-row {
+  display: flex;
+  gap: 6px;
+}
+.kb-row.inset {
+  padding: 0 calc(var(--k) / 2 + 3px);
+}
+.kb-group {
+  display: flex;
+  gap: 6px;
+  margin: 0 auto;
+}
+.kb-key {
+  position: relative;
+  flex: 1 1 0;
+  height: 42px;
+  border-radius: 5px;
+  background: var(--kb-key);
+  box-shadow: var(--kb-shadow);
+  color: var(--label);
+  font-size: 23px;
+  font-weight: 400;
+  touch-action: manipulation;
+}
+.kb-group .kb-key {
+  flex: 0 0 var(--k);
+}
+.kb-key.special {
+  background: var(--kb-special);
+  font-size: 16px;
+}
+.kb-key.special.wide {
+  flex: 0 0 calc(var(--k) * 1.3);
+  font-size: 20px;
+}
+.kb-key.special.active {
+  background: var(--kb-key);
+}
+.kb-row:last-child .special:first-child {
+  flex: 0 0 calc(var(--k) * 1.3);
+}
+.kb-row:last-child .special:last-child {
+  flex: 0 0 calc(var(--k) * 2.3);
+}
+.kb-key.space {
+  font-size: 16px;
+}
+.kb-key.special:active,
+.kb-key.space:active {
+  background: var(--kb-key);
+}
+/* The callout a phone raises above your finger. */
+.kb-callout {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% - 4px);
+  transform: translateX(-50%);
+  min-width: calc(100% + 16px);
+  height: 56px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  background: var(--kb-key);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.22);
+  font-size: 34px;
+  pointer-events: none;
+  z-index: 2;
+}
+
+@media (orientation: landscape) and (max-height: 500px) {
+  .qwerty {
+    gap: 6px;
+  }
+  .kb-key {
+    height: 32px;
+    font-size: 19px;
+  }
+  .kb-callout {
+    display: none;
   }
 }

@@ -4,7 +4,7 @@ import { MouseSender } from './ble/mouse';
 import { ChevronRight, KeyboardIcon, MediaIcon, MenuIcon, MonitorIcon, WindowIcon } from './icons';
 import { NO_MODS, consumeMods, tapMod, type ModState } from './protocol/mods';
 import { Ctrl, Page } from './protocol/packets';
-import { KeyStrip, LiveInput } from './screens/KeyboardBar';
+import { KeyStrip, Qwerty } from './screens/KeyboardBar';
 import { KeysPanel } from './screens/KeysPanel';
 import { MediaPanel } from './screens/MediaPanel';
 import { SettingsSheet } from './screens/Settings';
@@ -37,36 +37,12 @@ function useTheme(choice: 'auto' | 'light' | 'dark') {
     const apply = () => {
       const dark = choice === 'dark' || (choice === 'auto' && media.matches);
       document.documentElement.dataset.theme = dark ? 'dark' : 'light';
-      document.querySelector('meta[name="theme-color"]')?.setAttribute('content', dark ? '#0b1f12' : '#5fb35a');
+      document.querySelector('meta[name="theme-color"]')?.setAttribute('content', dark ? '#0b0b1e' : '#e9e4ff');
     };
     apply();
     media.addEventListener('change', apply);
     return () => media.removeEventListener('change', apply);
   }, [choice]);
-}
-
-/**
- * Size the app to the part of the screen the phone keyboard leaves, so the
- * toolbar rides on top of the keyboard. Android Chrome resizes the page
- * itself; iOS only reports it through visualViewport.
- */
-function useVisibleViewport() {
-  useEffect(() => {
-    const vv = window.visualViewport;
-    if (!vv) return;
-    const root = document.documentElement.style;
-    const fit = () => {
-      root.setProperty('--app-h', `${vv.height}px`);
-      root.setProperty('--app-top', `${vv.offsetTop}px`);
-    };
-    fit();
-    vv.addEventListener('resize', fit);
-    vv.addEventListener('scroll', fit);
-    return () => {
-      vv.removeEventListener('resize', fit);
-      vv.removeEventListener('scroll', fit);
-    };
-  }, []);
 }
 
 /** The last few characters typed, shown on the pad and gone after a pause. */
@@ -88,12 +64,10 @@ export function App() {
   useLink();
   const settings = useSettings();
   useTheme(settings.theme);
-  useVisibleViewport();
   const [panel, setPanel] = useState<Panel>('none');
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [mods, setMods] = useState<ModState>(NO_MODS);
   const [echo, pushEcho] = useEcho();
-  const input = useRef<HTMLInputElement>(null);
   const mouse = useMemo(() => new MouseSender(link), []);
 
   // Reconnect on launch and whenever the app returns to the foreground; the
@@ -155,12 +129,7 @@ export function App() {
 
   const toggle = (p: Panel) => {
     haptic();
-    const next = panel === p ? 'none' : p;
-    // Focus inside the tap itself: phones only raise the keyboard for a
-    // focus that comes straight from a user gesture.
-    if (next === 'keyboard') input.current?.focus();
-    else input.current?.blur();
-    setPanel(next);
+    setPanel(panel === p ? 'none' : p);
   };
 
   const tool = (p: Panel | 'settings', label: string, icon: ReactNode) => (
@@ -168,13 +137,7 @@ export function App() {
       aria-label={label}
       aria-pressed={p === 'settings' ? settingsOpen : panel === p}
       className={(p === 'settings' ? settingsOpen : panel === p) ? 'on' : ''}
-      onPointerDown={(e) => p === 'keyboard' && e.preventDefault() /* keep focus where it is */}
-      onClick={() => {
-        if (p === 'settings') {
-          input.current?.blur();
-          setSettingsOpen(true);
-        } else toggle(p);
-      }}
+      onClick={() => (p === 'settings' ? setSettingsOpen(true) : toggle(p))}
     >
       {icon}
     </button>
@@ -183,7 +146,7 @@ export function App() {
   const typing = link.textPending > 0 || !!link.status?.typing;
 
   return (
-    <div className="app">
+    <div className={panel === 'keyboard' ? 'app kb-open' : 'app'}>
       <div className="wallpaper" aria-hidden="true" />
 
       <header className="top">
@@ -202,7 +165,6 @@ export function App() {
 
       {panel === 'media' && <MediaPanel ctx={ctx} onClose={() => setPanel('none')} />}
       {panel === 'keys' && <KeysPanel ctx={ctx} />}
-      {panel === 'keyboard' && <KeyStrip ctx={ctx} />}
 
       <nav className="toolbar">
         {tool('settings', 'Settings', <MenuIcon />)}
@@ -210,13 +172,14 @@ export function App() {
         {tool('media', 'Media controls', <MediaIcon />)}
         {tool('keys', 'Shortcuts and keys', <WindowIcon />)}
         {tool('keyboard', 'Keyboard', <KeyboardIcon />)}
-        <LiveInput
-          ref={input}
-          ctx={ctx}
-          onEcho={pushEcho}
-          onBlur={() => setPanel((p) => (p === 'keyboard' ? 'none' : p))}
-        />
       </nav>
+
+      {panel === 'keyboard' && (
+        <div className="keyboard">
+          <KeyStrip ctx={ctx} onEcho={pushEcho} />
+          <Qwerty ctx={ctx} onEcho={pushEcho} />
+        </div>
+      )}
 
       {settingsOpen && <SettingsSheet onClose={() => setSettingsOpen(false)} />}
     </div>

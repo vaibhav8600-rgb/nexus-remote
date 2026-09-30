@@ -11,8 +11,16 @@ Interface Guidelines, with Automatic, Light and Dark themes.
 One screen, like a laptop's trackpad: the whole background is the pad, a
 strip down the right edge scrolls, three buttons along the bottom click. The
 toolbar opens the rest in place - settings (≡), a media click wheel (▷),
-shortcuts and special keys (▭), and the phone's own keyboard (⌨) with a strip
-of Ctrl/Alt/Win/Esc/arrows above it.
+shortcuts and special keys (▭), and a phone-style QWERTY keyboard (⌨) with a
+strip of Ctrl/Alt/Win/Esc/arrows and Paste above it.
+
+The keyboard is the app's own, not the phone's: it sends real key presses,
+so Ctrl, Alt and Win combine with any key, and nothing about it depends on
+how a browser raises the system keyboard. Paste types the phone's clipboard
+out through NEXUS for anything longer.
+
+The colours are the NEXUS dongle's own: a deep indigo night lit by magenta
+and cyan with a mint accent, and a lavender daylight version of the same.
 
 | Phone | How |
 | --- | --- |
