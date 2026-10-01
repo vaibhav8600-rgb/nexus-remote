@@ -126,6 +126,7 @@ export class NexusLink {
     const device = this.device;
     if (!device?.gatt) return;
     this.set(this.state === 'reconnecting' ? 'reconnecting' : 'connecting');
+    let reached = false;
     try {
       const server = await device.gatt.connect();
       const service = await server.getPrimaryService(SERVICE);
@@ -133,8 +134,22 @@ export class NexusLink {
         this.chars[name] = await service.getCharacteristic(CHAR[name]);
       }
       const status = this.chars.status!;
+      reached = true;
       // The first encrypted read is what makes the phone pair.
-      this.onStatus(await status.readValue());
+      try {
+        this.onStatus(await status.readValue());
+      } catch {
+        // NEXUS refuses pairing outside its 60 s window. Retrying would
+        // only be refused again - and hammer the dongle with pairings.
+        this.userClosed = true;
+        device.gatt.disconnect();
+        this.set(
+          'idle',
+          'NEXUS did not accept this phone. On NEXUS open Settings → PHONE, then tap Connect within 60 seconds and enter the six digits it shows.',
+        );
+        return;
+      }
+      reached = false;
       status.addEventListener('characteristicvaluechanged', this.onNotify);
       await status.startNotifications();
       if (this.status && this.status.version !== PROTOCOL_VERSION) {
@@ -149,7 +164,7 @@ export class NexusLink {
       this.pump();
     } catch (e) {
       this.chars = {};
-      if (this.state === 'reconnecting') throw e;
+      if (this.state === 'reconnecting' && !reached) throw e;
       this.set('idle', message(e));
     }
   }
@@ -172,7 +187,7 @@ export class NexusLink {
     for (const j of this.jobs.splice(0)) if (!('text' in j)) j.reject(new Error('disconnected'));
     this.textQueued = 0;
     if (this.userClosed) {
-      this.set('idle');
+      this.set('idle', this.error); // keep a message that explains why
       return;
     }
     this.set('reconnecting');
