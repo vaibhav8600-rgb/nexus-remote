@@ -421,6 +421,33 @@ button.cell:active:not(:disabled) {
   font-size: 15px;
   pointer-events: none;
 }
+.connect-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  max-width: 260px;
+  text-align: center;
+}
+.connect-button {
+  min-height: 50px;
+  padding: 0 28px;
+  border-radius: 25px;
+  background: var(--tint);
+  color: var(--tint-on);
+  font-size: 17px;
+  font-weight: 600;
+  box-shadow: var(--shadow);
+}
+.connect-button:active {
+  filter: brightness(0.88);
+}
+.connect-help {
+  color: var(--on-wall);
+  opacity: 0.7;
+  font-size: 13px;
+  line-height: 1.35;
+}
 .echo {
   max-width: 80%;
   color: var(--on-wall);

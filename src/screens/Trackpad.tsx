@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, type PointerEvent } from 'react';
 import type { Ctx } from '../App';
-import { link } from '../ble/link';
+import { NexusLink, link } from '../ble/link';
 import { ChevronDown, ChevronUp } from '../icons';
 import { Gestures, type Intent } from '../protocol/gestures';
 import { Button, KeyAction, Page } from '../protocol/packets';
@@ -116,7 +116,7 @@ export function Trackpad({ ctx, echo, buttons }: { ctx: Ctx; echo: string; butto
         {echo ? (
           <span className="echo">{echo}</span>
         ) : (
-          link.state !== 'connected' && <span className="pad-hint">Tap NEXUS above to connect</span>
+          link.state !== 'connected' && <ConnectCard />
         )}
       </div>
 
@@ -136,6 +136,26 @@ export function Trackpad({ ctx, echo, buttons }: { ctx: Ctx; echo: string; butto
           <button aria-label="Right click" {...hold(Button.right)} />
         </div>
       )}
+    </div>
+  );
+}
+
+/** Not connected: one clear way back, and what to do when NEXUS is not offered. */
+function ConnectCard() {
+  if (!NexusLink.supported()) return <span className="pad-hint">Open this page in Chrome, or Bluefy on iPhone</span>;
+  if (link.state !== 'idle') return <span className="pad-hint">{link.state === 'connecting' ? 'Connecting…' : 'Reconnecting…'}</span>;
+  return (
+    <div className="connect-card" onPointerDown={(e) => e.stopPropagation()}>
+      <button
+        className="connect-button"
+        onClick={() => {
+          haptic();
+          void link.pick();
+        }}
+      >
+        Connect to NEXUS
+      </button>
+      <span className="connect-help">Not in the list? On NEXUS open Settings → PHONE, then try again.</span>
     </div>
   );
 }
