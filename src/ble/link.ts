@@ -300,6 +300,9 @@ export class NexusLink {
   /** Mouse state for this frame. Merged with anything still waiting that
    *  has the same buttons; a button change always gets its own packet. */
   sendMouse(buttons: number, dx: number, dy: number, wheel = 0, hwheel = 0) {
+    // Movement during a drop is not saved up for the reconnect: the pointer
+    // would jump by all of it at once.
+    if (this.state !== 'connected') return;
     const last = this.mouse[this.mouse.length - 1];
     if (last && last.buttons === buttons) {
       last.dx += dx;

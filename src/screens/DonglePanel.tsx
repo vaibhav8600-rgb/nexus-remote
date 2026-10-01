@@ -18,8 +18,9 @@ import { Act, Ctrl, Output } from '../protocol/packets';
 import { haptic } from '../settings';
 import { Segmented } from '../ui';
 
-/** Sent while a button is held, inside NEXUS's 1 s hold timeout. */
-const KEEPALIVE_MS = 400;
+/** Sent while a button is held: the same 250 ms the dongle's hold timeout
+ *  (1 s) is documented against. */
+const KEEPALIVE_MS = 250;
 
 const send = (op: number, ...args: number[]) => void link.control(op, ...args).catch(() => undefined);
 
