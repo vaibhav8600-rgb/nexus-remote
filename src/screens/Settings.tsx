@@ -23,7 +23,7 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
         <div className="sheet-body">
           <Section
             header="NEXUS"
-            footer="To pair a new phone, open Settings → PHONE on NEXUS, tap Connect, and enter the six digits NEXUS shows."
+            footer="To pair a new phone, open Settings → PHONE on NEXUS, tap Connect, and enter the six digits NEXUS shows. If NEXUS is missing from the list later, do the same: a paired phone needs no code."
           >
             <Row label={connected ? link.name || 'NEXUS' : 'Not Connected'}>
               <span className="cell-value">
