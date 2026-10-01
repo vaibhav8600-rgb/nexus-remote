@@ -88,7 +88,12 @@ export class NexusLink {
   /** Show the browser's device picker. Needs a user gesture. */
   async pick(): Promise<void> {
     try {
-      const device = await navigator.bluetooth.requestDevice({ filters: [{ services: [SERVICE] }] });
+      // NEXUS advertises as the keyboard it is, under ZMK's keyboard name;
+      // the Remote Input service is found once connected.
+      const device = await navigator.bluetooth.requestDevice({
+        filters: [{ namePrefix: 'NEXUS' }],
+        optionalServices: [SERVICE],
+      });
       this.adopt(device);
       await this.open();
     } catch (e) {
@@ -129,7 +134,9 @@ export class NexusLink {
     let reached = false;
     try {
       const server = await device.gatt.connect();
-      const service = await server.getPrimaryService(SERVICE);
+      const service = await server.getPrimaryService(SERVICE).catch(() => {
+        throw new Error('This NEXUS has no Remote Input. Flash firmware built with CONFIG_NEXUS_REMOTE_INPUT=y.');
+      });
       for (const name of Object.keys(CHAR) as CharName[]) {
         this.chars[name] = await service.getCharacteristic(CHAR[name]);
       }
