@@ -109,3 +109,68 @@ export const StopIcon = () => (
     <rect x="7" y="7" width="10" height="10" rx="1.5" />
   </Icon>
 );
+
+export const GamepadIcon = () => (
+  <Icon>
+    <path d="M7.5 7h9a4.5 4.5 0 0 1 4.4 5.5l-.9 4a2.6 2.6 0 0 1-4.4 1.2L13.6 16h-3.2l-2 1.7a2.6 2.6 0 0 1-4.4-1.2l-.9-4A4.5 4.5 0 0 1 7.5 7z" />
+    <path d="M8 10v4M6 12h4" />
+    <path d="M15.5 11h.01M17.5 13h.01" strokeWidth={2.4} />
+  </Icon>
+);
+
+export const HomeIcon = () => (
+  <Icon>
+    <path d="M4 11.5 12 5l8 6.5" />
+    <path d="M6.5 10v9h11v-9" />
+  </Icon>
+);
+
+export const GridIcon = () => (
+  <Icon>
+    <rect x="4.5" y="4.5" width="6" height="6" rx="1.5" />
+    <rect x="13.5" y="4.5" width="6" height="6" rx="1.5" />
+    <rect x="4.5" y="13.5" width="6" height="6" rx="1.5" />
+    <rect x="13.5" y="13.5" width="6" height="6" rx="1.5" />
+  </Icon>
+);
+
+export const SlidersIcon = () => (
+  <Icon>
+    <path d="M5 8h9M18 8h1M5 16h1M10 16h9" />
+    <circle cx="16" cy="8" r="2" />
+    <circle cx="8" cy="16" r="2" />
+  </Icon>
+);
+
+export const ClockIcon = () => (
+  <Icon>
+    <circle cx="12" cy="12" r="8" />
+    <path d="M12 7.5V12l3 2" />
+  </Icon>
+);
+
+export const RotateIcon = () => (
+  <Icon>
+    <path d="M19 12a7 7 0 1 1-2.1-5" />
+    <path d="M19.5 4.5V9H15" />
+  </Icon>
+);
+
+export const DropIcon = () => (
+  <Icon>
+    <path d="M12 4v11M7 10.5l5 5 5-5M6 19.5h12" />
+  </Icon>
+);
+
+export const PaletteIcon = () => (
+  <Icon>
+    <path d="M12 4a8 8 0 0 0 0 16c1.2 0 1.8-.8 1.8-1.7 0-1.3-1.1-1.6-1.1-2.7 0-.9.7-1.6 1.6-1.6H16a4 4 0 0 0 4-4C20 6.9 16.4 4 12 4z" />
+    <path d="M8 11h.01M10.5 7.8h.01M14.5 8h.01" strokeWidth={2.4} />
+  </Icon>
+);
+
+export const SaveIcon = () => (
+  <Icon>
+    <path d="m5.5 12.5 4 4 9-9" />
+  </Icon>
+);

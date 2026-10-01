@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from 'react';
 import { NexusLink, link } from './ble/link';
 import { MouseSender } from './ble/mouse';
-import { ChevronRight, KeyboardIcon, MediaIcon, MenuIcon, MonitorIcon, WindowIcon } from './icons';
+import { ChevronRight, GamepadIcon, KeyboardIcon, MediaIcon, MenuIcon, MonitorIcon, WindowIcon } from './icons';
 import { NO_MODS, consumeMods, tapMod, type ModState } from './protocol/mods';
 import { Ctrl, Page } from './protocol/packets';
+import { DonglePanel } from './screens/DonglePanel';
 import { KeyStrip, LiveInput } from './screens/KeyboardBar';
 import { KeysPanel } from './screens/KeysPanel';
 import { MediaPanel } from './screens/MediaPanel';
@@ -11,7 +12,7 @@ import { SettingsSheet } from './screens/Settings';
 import { Trackpad } from './screens/Trackpad';
 import { haptic, useSettings } from './settings';
 
-type Panel = 'none' | 'keyboard' | 'media' | 'keys';
+type Panel = 'none' | 'keyboard' | 'media' | 'keys' | 'dongle';
 
 export interface Ctx {
   mouse: MouseSender;
@@ -191,7 +192,7 @@ export function App() {
         {link.error && <p className="toast error">{link.error}</p>}
       </header>
 
-      <Trackpad ctx={ctx} echo={echo} buttons={panel !== 'media' && panel !== 'keys'} />
+      <Trackpad ctx={ctx} echo={echo} buttons={panel === 'none' || panel === 'keyboard'} />
 
       {typing && (
         <div className="typing">
@@ -203,12 +204,14 @@ export function App() {
       {panel === 'media' && <MediaPanel ctx={ctx} onClose={() => setPanel('none')} />}
       {panel === 'keys' && <KeysPanel ctx={ctx} />}
       {panel === 'keyboard' && <KeyStrip ctx={ctx} />}
+      {panel === 'dongle' && <DonglePanel />}
 
       <nav className="toolbar">
         {tool('settings', 'Settings', <MenuIcon />)}
         <span className="toolbar-divider" />
         {tool('media', 'Media controls', <MediaIcon />)}
         {tool('keys', 'Shortcuts and keys', <WindowIcon />)}
+        {tool('dongle', 'NEXUS controls', <GamepadIcon />)}
         {tool('keyboard', 'Keyboard', <KeyboardIcon />)}
         <LiveInput
           ref={input}

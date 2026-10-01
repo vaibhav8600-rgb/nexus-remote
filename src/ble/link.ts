@@ -317,8 +317,8 @@ export class NexusLink {
     return this.key(KeyAction.tap, mods, page, usage);
   }
 
-  control(op: number, arg?: number): Promise<void> {
-    return this.queue('control', encodeControl(op, arg));
+  control(op: number, ...args: number[]): Promise<void> {
+    return this.queue('control', encodeControl(op, ...args));
   }
 
   // ---- text, paced by the dongle's free queue space ----------------------

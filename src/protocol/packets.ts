@@ -34,7 +34,31 @@ export const Ctrl = {
   cancelText: 0x03,
   typeDelay: 0x04,
   identify: 0x05,
+  action: 0x06,
+  output: 0x07,
 } as const;
+
+/** NEXUS actions a phone may send - the keyboard's game layer. */
+export const Act = {
+  select: 1,
+  back: 2,
+  home: 5,
+  gameCenter: 6,
+  menu: 10,
+  left: 11,
+  right: 12,
+  up: 13,
+  down: 14,
+  rotate: 15,
+  drop: 16,
+  save: 17,
+  themeNext: 18,
+  themePrev: 19,
+  host: 20,
+} as const;
+
+/** Where keys go, numbered as ZMK's transports. */
+export const Output = { usb: 1, ble: 2 } as const;
 
 const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, Math.trunc(v)));
 
@@ -59,8 +83,8 @@ export function encodeKey(action: number, mods: number, page: number, usage: num
   return b;
 }
 
-export function encodeControl(op: number, arg?: number): Bytes {
-  return arg === undefined ? Uint8Array.of(op) : Uint8Array.of(op, arg);
+export function encodeControl(op: number, ...args: number[]): Bytes {
+  return Uint8Array.of(op, ...args);
 }
 
 export interface Status {
@@ -73,7 +97,9 @@ export interface Status {
   capsLock: boolean;
   scrollLock: boolean;
   textFree: number;
-  features: { text: boolean; consumer: boolean; hwheel: boolean };
+  features: { text: boolean; consumer: boolean; hwheel: boolean; dongle: boolean; host: boolean };
+  /** Output.usb or Output.ble; 0 from firmware without dongle controls. */
+  output: number;
 }
 
 export function decodeStatus(data: DataView): Status {
@@ -90,6 +116,13 @@ export function decodeStatus(data: DataView): Status {
     capsLock: !!(leds & 2),
     scrollLock: !!(leds & 4),
     textFree: data.getUint16(3, true),
-    features: { text: !!(feat & 1), consumer: !!(feat & 2), hwheel: !!(feat & 4) },
+    features: {
+      text: !!(feat & 1),
+      consumer: !!(feat & 2),
+      hwheel: !!(feat & 4),
+      dongle: !!(feat & 8),
+      host: !!(feat & 16),
+    },
+    output: data.byteLength > 6 ? data.getUint8(6) : 0,
   };
 }

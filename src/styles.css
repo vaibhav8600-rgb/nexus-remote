@@ -791,3 +791,239 @@ button.cell:active:not(:disabled) {
     max-height: 55%;
   }
 }
+
+/* ---- NEXUS controls: the game layer -------------------------------------- */
+.dongle-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 14px max(16px, env(safe-area-inset-right)) 14px max(16px, env(safe-area-inset-left));
+  background: var(--glass-soft);
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+}
+.dongle-panel button {
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+.dongle-panel button:disabled {
+  opacity: 0.4;
+}
+.dongle-note {
+  margin: 0;
+  font-size: 13px;
+  text-align: center;
+  color: var(--secondary);
+}
+
+.chips {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
+  gap: 8px;
+}
+.chip {
+  min-height: 52px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  border-radius: 14px;
+  background: var(--glass);
+  box-shadow: var(--shadow);
+  font-size: 20px;
+  color: var(--on-wall);
+}
+.chip span {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--secondary);
+}
+.chip.held,
+.round.held,
+.step.held {
+  background: var(--cell-pressed);
+  transform: scale(0.96);
+}
+
+.pad-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.dpad {
+  position: relative;
+  flex: none;
+  width: 196px;
+  height: 196px;
+  border-radius: 50%;
+  background: var(--glass);
+  box-shadow: var(--shadow);
+}
+.dpad-zone {
+  position: absolute;
+  width: 60px;
+  height: 60px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  font-size: 24px;
+  color: var(--secondary);
+  transition: background-color 0.1s;
+}
+.dpad-zone.held {
+  background: var(--fill-3);
+  color: var(--tint);
+}
+.dpad-zone.n {
+  top: 4px;
+  left: 68px;
+}
+.dpad-zone.s {
+  bottom: 4px;
+  left: 68px;
+}
+.dpad-zone.w {
+  left: 4px;
+  top: 68px;
+}
+.dpad-zone.e {
+  right: 4px;
+  top: 68px;
+}
+.dpad-center {
+  position: absolute;
+  inset: 60px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  background: var(--cell);
+  box-shadow: inset 0 0 0 0.5px var(--separator), var(--shadow);
+}
+.dpad-center.held {
+  background: var(--cell-pressed);
+}
+
+.face {
+  flex: 1;
+  height: 196px;
+  position: relative;
+  max-width: 170px;
+}
+.face-button {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--secondary);
+}
+.face-button.rotate {
+  top: 6px;
+  right: 0;
+}
+.face-button.drop {
+  bottom: 6px;
+  left: 0;
+}
+.round.big {
+  width: 68px;
+  height: 68px;
+  font-size: 28px;
+}
+.round.tinted {
+  background: var(--tint);
+  color: var(--tint-on);
+}
+.round.tinted.held {
+  background: var(--tint);
+  filter: brightness(0.85);
+}
+.round.small {
+  flex: none;
+  width: 40px;
+  height: 40px;
+  font-size: 20px;
+}
+
+.dongle-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.output {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.output.disabled {
+  opacity: 0.4;
+  pointer-events: none;
+}
+.mini-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--secondary);
+}
+.theme-step {
+  display: flex;
+  align-items: center;
+  border-radius: 20px;
+  background: var(--glass);
+  box-shadow: var(--shadow);
+}
+.step {
+  width: 36px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border-radius: 20px;
+  font-size: 18px;
+}
+.theme-label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+/* Small phones: shrink the pad before anything wraps. */
+@media (max-width: 370px) {
+  .dpad {
+    width: 168px;
+    height: 168px;
+  }
+  .dpad-zone {
+    width: 52px;
+    height: 52px;
+  }
+  .dpad-zone.n,
+  .dpad-zone.s {
+    left: 58px;
+  }
+  .dpad-zone.w,
+  .dpad-zone.e {
+    top: 58px;
+  }
+  .dpad-center {
+    inset: 52px;
+  }
+  .face {
+    height: 168px;
+  }
+  .mini-label {
+    display: none;
+  }
+}

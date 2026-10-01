@@ -3,7 +3,7 @@
 import { describe, expect, it } from 'vitest';
 import { Gestures, type Intent, type PointerIn } from './gestures';
 import { letter, shortcuts } from './hid';
-import { Ctrl, KeyAction, Mod, Page, decodeStatus, encodeControl, encodeKey, encodeMouse } from './packets';
+import { Act, Ctrl, KeyAction, Output, Mod, Page, decodeStatus, encodeControl, encodeKey, encodeMouse } from './packets';
 import { chunks, sanitize } from './text';
 
 const hex = (b: Uint8Array) => Array.from(b, (x) => x.toString(16).padStart(2, '0').toUpperCase()).join(' ');
@@ -29,6 +29,9 @@ describe('packets match the protocol doc', () => {
   it('control', () => {
     expect(hex(encodeControl(Ctrl.releaseAll))).toBe('01');
     expect(hex(encodeControl(Ctrl.typeDelay, 10))).toBe('04 0A');
+    expect(hex(encodeControl(Ctrl.action, Act.up, 1))).toBe('06 0D 01');
+    expect(hex(encodeControl(Ctrl.action, Act.up, 0))).toBe('06 0D 00');
+    expect(hex(encodeControl(Ctrl.output, Output.ble))).toBe('07 02');
   });
 
   it('status', () => {
@@ -42,8 +45,15 @@ describe('packets match the protocol doc', () => {
       capsLock: true,
       numLock: false,
       textFree: 512,
-      features: { text: true, consumer: true, hwheel: true },
+      features: { text: true, consumer: true, hwheel: true, dongle: false },
+      output: 0,
     });
+  });
+
+  it('status with dongle controls', () => {
+    const s = decodeStatus(new DataView(bytes('01 03 02 00 02 0F 01').buffer));
+    expect(s.features).toMatchObject({ dongle: true, host: false });
+    expect(s.output).toBe(Output.usb);
   });
 });
 
