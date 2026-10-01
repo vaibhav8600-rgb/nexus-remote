@@ -273,64 +273,12 @@ button.cell:active:not(:disabled) {
   box-shadow: var(--shadow);
 }
 
-.filled {
-  min-height: 44px;
-  padding: 0 20px;
-  border-radius: 12px;
-  background: var(--blue);
-  color: #fff;
-  font-weight: 600;
-}
-.filled.small {
-  min-height: 34px;
-  padding: 0 16px;
-  border-radius: 17px;
-  font-size: 15px;
-}
-.filled:active:not(:disabled) {
-  opacity: 0.7;
-}
 .text-button {
   color: var(--blue);
   min-height: 44px;
 }
-.text-button.destructive {
-  color: var(--red);
-}
 .text-button:active {
   opacity: 0.3;
-}
-
-.field {
-  display: block;
-  width: 100%;
-  border: 0;
-  padding: 11px 16px;
-  background: transparent;
-  resize: none;
-  outline: none;
-}
-.field::placeholder {
-  color: var(--tertiary);
-}
-.progress {
-  flex: 1;
-  appearance: none;
-  -webkit-appearance: none;
-  height: 4px;
-  border: 0;
-  border-radius: 2px;
-  background: var(--fill);
-  overflow: hidden;
-}
-.progress::-webkit-progress-bar {
-  background: var(--fill);
-}
-.progress::-webkit-progress-value {
-  background: var(--blue);
-}
-.progress::-moz-progress-bar {
-  background: var(--blue);
 }
 
 /* ---- the remote: wallpaper, glass, one screen -------------------------- */

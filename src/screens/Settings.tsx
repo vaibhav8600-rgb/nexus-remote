@@ -25,7 +25,7 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
             header="NEXUS"
             footer="To pair a new phone, open Settings → PHONE on NEXUS, tap Connect, and enter the six digits NEXUS shows."
           >
-            <Row label={connected ? link.name || 'NEXUS Remote' : 'Not Connected'}>
+            <Row label={connected ? link.name || 'NEXUS' : 'Not Connected'}>
               <span className="cell-value">
                 {connected ? (link.status?.remoteOn ? 'Connected' : 'Remote off') : ''}
               </span>

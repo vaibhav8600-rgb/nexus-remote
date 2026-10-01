@@ -17,7 +17,7 @@ export interface Settings {
   theme: 'auto' | 'light' | 'dark';
 }
 
-export const DEFAULTS: Settings = {
+const DEFAULTS: Settings = {
   speed: 1.6,
   accel: 1,
   scroll: 1,
@@ -43,10 +43,6 @@ function load(): Settings {
 }
 
 let current = load();
-
-export function getSettings(): Settings {
-  return current;
-}
 
 export function updateSettings(patch: Partial<Settings>) {
   current = { ...current, ...patch };

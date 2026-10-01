@@ -21,7 +21,7 @@ const SUBSTITUTES: Record<string, string> = {
   '•': '*',
 };
 
-export function isTypeable(code: number): boolean {
+function isTypeable(code: number): boolean {
   return (code >= 0x20 && code <= 0x7e) || code === 0x0a || code === 0x09;
 }
 

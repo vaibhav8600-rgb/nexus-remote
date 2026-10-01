@@ -22,7 +22,7 @@ import {
 } from '../protocol/packets';
 import { chunks, sanitize } from '../protocol/text';
 
-export type LinkState = 'idle' | 'connecting' | 'connected' | 'reconnecting';
+type LinkState = 'idle' | 'connecting' | 'connected' | 'reconnecting';
 type CharName = keyof typeof CHAR;
 
 interface Op {
@@ -52,8 +52,6 @@ export class NexusLink {
   status: Status | null = null;
   name = '';
   error = '';
-  /** Text sent and not yet typed, for the progress bar. */
-  textQueued = 0;
 
   private device?: BluetoothDevice;
   private chars: Partial<Record<CharName, BluetoothRemoteGATTCharacteristic>> = {};
@@ -109,7 +107,8 @@ export class NexusLink {
     const device = (await navigator.bluetooth.getDevices().catch(() => [])).find((d) => d.id === id);
     if (!device) return;
     this.adopt(device);
-    await this.open().catch(() => undefined);
+    // Quiet: NEXUS simply not being nearby when the app opens is no error.
+    await this.open(true).catch(() => undefined);
   }
 
   private adopt(device: BluetoothDevice) {
@@ -118,7 +117,7 @@ export class NexusLink {
       device.addEventListener('gattserverdisconnected', this.onDrop);
     }
     this.device = device;
-    this.name = device.name ?? 'NEXUS Remote';
+    this.name = device.name ?? 'NEXUS';
     this.userClosed = false;
     try {
       localStorage.setItem(REMEMBER, device.id);
@@ -127,7 +126,7 @@ export class NexusLink {
     }
   }
 
-  private async open(): Promise<void> {
+  private async open(quiet = false): Promise<void> {
     const device = this.device;
     if (!device?.gatt) return;
     this.set(this.state === 'reconnecting' ? 'reconnecting' : 'connecting');
@@ -166,11 +165,14 @@ export class NexusLink {
       status.addEventListener('characteristicvaluechanged', this.onNotify);
       await status.startNotifications();
       if (this.status && this.status.version !== PROTOCOL_VERSION) {
+        // Not a drop to recover from: reconnecting would only meet the same
+        // mismatch, forever.
+        this.userClosed = true;
+        device.gatt.disconnect();
         this.set(
           'idle',
           `This NEXUS speaks protocol ${this.status.version}; the app speaks ${PROTOCOL_VERSION}. Update one of them.`,
         );
-        device.gatt.disconnect();
         return;
       }
       this.set('connected');
@@ -178,7 +180,7 @@ export class NexusLink {
     } catch (e) {
       this.chars = {};
       if (this.state === 'reconnecting' && !reached) throw e;
-      this.set('idle', `${message(e)} (${step}: ${detail(e)})`);
+      this.set('idle', quiet ? '' : `${message(e)} (${step}: ${detail(e)})`);
     }
   }
 
@@ -198,7 +200,6 @@ export class NexusLink {
     this.mouse = [];
     // Text does not survive a drop - the dongle dropped its half of it too.
     for (const j of this.jobs.splice(0)) if (!('text' in j)) j.reject(new Error('disconnected'));
-    this.textQueued = 0;
     if (this.userClosed) {
       this.set('idle', this.error); // keep a message that explains why
       return;
@@ -268,10 +269,7 @@ export class NexusLink {
           continue;
         }
         const job = this.jobs[0];
-        if (!job) {
-          this.settleText();
-          break;
-        }
+        if (!job) break;
         if ('text' in job) {
           if (!(await this.feedText(job))) break;
           continue;
@@ -332,14 +330,12 @@ export class NexusLink {
     const last = this.jobs[this.jobs.length - 1];
     if (last && 'text' in last) last.text += clean;
     else this.jobs.push({ text: clean });
-    this.textQueued += clean.length;
     this.emit();
     this.pump();
   }
 
   cancelText() {
     this.jobs = this.jobs.filter((j) => !('text' in j));
-    this.textQueued = 0;
     this.emit();
     if (this.state === 'connected') void this.control(Ctrl.cancelText).catch(() => undefined);
   }
@@ -348,20 +344,19 @@ export class NexusLink {
     return this.jobs.reduce((n, j) => n + ('text' in j ? j.text.length : 0), 0);
   }
 
-  /** The progress bar is done once NEXUS has typed the last of it. */
-  private settleText() {
-    if (this.textQueued && !this.status?.typing) {
-      this.textQueued = 0;
-      this.emit();
-    }
-  }
-
   /**
    * Hand NEXUS one chunk of @p job if it has room. False when it has none -
    * never waits inside the pump, or the mouse would stall behind a paste. A
    * status notification or the timer below restarts it.
    */
   private async feedText(job: TextJob): Promise<boolean> {
+    if (this.status && !this.status.remoteOn) {
+      // NEXUS refuses every write while remote input is off: drop the text
+      // rather than retry it every 300 ms until someone switches it back on.
+      this.jobs = this.jobs.filter((j) => !('text' in j));
+      this.emit();
+      return true;
+    }
     const room = Math.min(20, this.freeEstimate);
     if (room <= 0) {
       this.recheckSoon();
@@ -414,7 +409,7 @@ function message(e: unknown): string {
     case 'SecurityError':
       return 'Bluetooth permission was denied.';
     case 'NotSupportedError':
-      return 'This NEXUS does not have Remote Input turned on.';
+      return 'NEXUS refused that Bluetooth request.';
     case 'NetworkError':
       return 'Could not reach NEXUS. Is it in range and paired?';
     default:

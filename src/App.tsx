@@ -26,7 +26,7 @@ export interface Ctx {
 function useLink() {
   return useSyncExternalStore(
     (fn) => link.subscribe(fn),
-    () => `${link.state}|${link.error}|${link.textPending}|${link.textQueued}|${JSON.stringify(link.status)}`,
+    () => `${link.state}|${link.error}|${link.textPending}|${JSON.stringify(link.status)}`,
   );
 }
 
@@ -234,7 +234,7 @@ function DevicePill({ onOpen }: { onOpen: () => void }) {
   } else if (link.state === 'connecting') label = 'Connecting…';
   else if (link.state === 'reconnecting') label = 'Reconnecting…';
   else if (link.state === 'connected') {
-    label = link.name || 'NEXUS Remote';
+    label = link.name || 'NEXUS';
     tone = s?.remoteOn ? 'ok' : 'warn';
   }
 
