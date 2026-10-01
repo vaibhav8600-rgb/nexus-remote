@@ -46,12 +46,17 @@ interface MousePending {
 }
 
 const REMEMBER = 'nexus.device';
+/** As long as a pairing can take: Bluetooth gives up after 30 s. */
+const PAIR_WAIT_MS = 30000;
+const PAIR_RETRY_MS = 2000;
 
 export class NexusLink {
   state: LinkState = 'idle';
   status: Status | null = null;
   name = '';
   error = '';
+  /** Waiting for the user to confirm the pairing code on both screens. */
+  pairing = false;
 
   private device?: BluetoothDevice;
   private chars: Partial<Record<CharName, BluetoothRemoteGATTCharacteristic>> = {};
@@ -147,19 +152,19 @@ export class NexusLink {
       const status = this.chars.status!;
       reached = true;
       // The first encrypted read is what makes the phone pair.
-      try {
-        this.onStatus(await status.readValue());
-      } catch {
+      const first = await this.firstRead(status, device);
+      if (!first) {
         // NEXUS refuses pairing outside its 60 s window. Retrying would
         // only be refused again - and hammer the dongle with pairings.
         this.userClosed = true;
         device.gatt.disconnect();
         this.set(
           'idle',
-          'NEXUS did not accept this phone. If NEXUS is listed in your phone’s Bluetooth settings, tap it and Forget This Device. Then on NEXUS open Settings → PHONE, tap Connect within 60 seconds and enter the six digits it shows.',
+          'NEXUS did not accept this phone. If NEXUS is listed in your phone’s Bluetooth settings, tap it and Forget This Device. Then on NEXUS open Settings → PHONE, tap Connect within 60 seconds, and check the code on the phone matches the one on NEXUS before you confirm on both.',
         );
         return;
       }
+      this.onStatus(first);
       reached = false;
       step = 'subscribe';
       status.addEventListener('characteristicvaluechanged', this.onNotify);
@@ -181,6 +186,36 @@ export class NexusLink {
       this.chars = {};
       if (this.state === 'reconnecting' && !reached) throw e;
       this.set('idle', quiet ? '' : `${message(e)} (${step}: ${detail(e)})`);
+    }
+  }
+
+  /**
+   * The first Status read. An iPhone holds it until pairing is done; Chrome
+   * on Android fails it at once and pairs in the background, so there it is
+   * asked again while the user compares codes - on Android only, because a
+   * refused iPhone would show a pairing failure for every retry.
+   */
+  private async firstRead(c: BluetoothRemoteGATTCharacteristic, device: BluetoothDevice): Promise<DataView | null> {
+    const retry = /Android/i.test(navigator.userAgent);
+    const end = Date.now() + PAIR_WAIT_MS;
+    try {
+      for (;;) {
+        try {
+          return await c.readValue();
+        } catch {
+          if (!retry || !device.gatt?.connected || Date.now() > end) return null;
+          if (!this.pairing) {
+            this.pairing = true;
+            this.emit();
+          }
+          await sleep(PAIR_RETRY_MS);
+        }
+      }
+    } finally {
+      if (this.pairing) {
+        this.pairing = false;
+        this.emit();
+      }
     }
   }
 
