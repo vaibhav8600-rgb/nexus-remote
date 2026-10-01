@@ -18,6 +18,14 @@ dictation all work.
 The colours are the NEXUS dongle's own: a deep indigo night lit by magenta
 and cyan with a mint accent, and a lavender daylight version of the same.
 
+| Trackpad | Keyboard | Keys | Media | Settings |
+| --- | --- | --- | --- | --- |
+| <img src="docs/screenshots/trackpad-dark.png" width="150" alt="Trackpad, dark"> | <img src="docs/screenshots/keyboard-dark.png" width="150" alt="Keyboard strip, dark"> | <img src="docs/screenshots/keys-dark.png" width="150" alt="Shortcuts and special keys, dark"> | <img src="docs/screenshots/media-dark.png" width="150" alt="Media wheel, dark"> | <img src="docs/screenshots/settings-dark.png" width="150" alt="Settings, dark"> |
+| <img src="docs/screenshots/trackpad-light.png" width="150" alt="Trackpad, light"> | <img src="docs/screenshots/keyboard-light.png" width="150" alt="Keyboard strip, light"> | <img src="docs/screenshots/keys-light.png" width="150" alt="Shortcuts and special keys, light"> | <img src="docs/screenshots/media-light.png" width="150" alt="Media wheel, light"> | <img src="docs/screenshots/settings-light.png" width="150" alt="Settings, light"> |
+
+The keyboard view is shown without the phone's own keyboard, which opens
+under the strip on a real phone.
+
 | Phone | How |
 | --- | --- |
 | Android | Open the site in **Chrome**, tap **Connect**. Menu > **Add to Home screen** for a full-screen app. |
