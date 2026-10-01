@@ -34,7 +34,7 @@ under the strip on a real phone.
 
 | Phone | How |
 | --- | --- |
-| Android | **Not working yet**: pairing with NEXUS fails in Chrome. Being worked on; see the NEXUS repo's `docs/remote-input.md`. |
+| Android | Open the site in **Chrome**, tap **Connect**. Experimental: needs NEXUS firmware that pairs by comparing codes, and is not yet confirmed on hardware. |
 | iPhone | Safari has no Web Bluetooth - open the site in **Bluefy** (free, App Store). |
 
 NEXUS needs `CONFIG_NEXUS_REMOTE_INPUT=y`; pairing and setup are in the

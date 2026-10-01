@@ -27,7 +27,7 @@ export interface Ctx {
 function useLink() {
   return useSyncExternalStore(
     (fn) => link.subscribe(fn),
-    () => `${link.state}|${link.error}|${link.textPending}|${JSON.stringify(link.status)}`,
+    () => `${link.state}|${link.pairing}|${link.error}|${link.textPending}|${JSON.stringify(link.status)}`,
   );
 }
 
@@ -234,7 +234,8 @@ function DevicePill({ onOpen }: { onOpen: () => void }) {
   if (!NexusLink.supported()) {
     label = 'Open in Chrome, or Bluefy on iPhone';
     tone = 'warn';
-  } else if (link.state === 'connecting') label = 'Connecting…';
+  } else if (link.pairing) label = 'Confirm the code…';
+  else if (link.state === 'connecting') label = 'Connecting…';
   else if (link.state === 'reconnecting') label = 'Reconnecting…';
   else if (link.state === 'connected') {
     label = link.name || 'NEXUS';
