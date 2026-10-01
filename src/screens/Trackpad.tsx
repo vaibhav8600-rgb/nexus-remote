@@ -143,15 +143,6 @@ export function Trackpad({ ctx, echo, buttons }: { ctx: Ctx; echo: string; butto
 /** Not connected: one clear way back, and what to do when NEXUS is not offered. */
 function ConnectCard() {
   if (!NexusLink.supported()) return <span className="pad-hint">Open this page in Chrome, or Bluefy on iPhone</span>;
-  if (link.pairing)
-    return (
-      <div className="connect-card">
-        <span className="connect-title">Confirm the code</span>
-        <span className="connect-help">
-          Check the six digits on your phone match NEXUS. Tap Pair on the phone, then press the button on NEXUS.
-        </span>
-      </div>
-    );
   if (link.state !== 'idle') return <span className="pad-hint">{link.state === 'connecting' ? 'Connecting…' : 'Reconnecting…'}</span>;
   return (
     <div className="connect-card" onPointerDown={(e) => e.stopPropagation()}>

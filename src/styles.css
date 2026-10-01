@@ -442,11 +442,6 @@ button.cell:active:not(:disabled) {
 .connect-button:active {
   filter: brightness(0.88);
 }
-.connect-title {
-  color: var(--on-wall);
-  font-size: 20px;
-  font-weight: 700;
-}
 .connect-help {
   color: var(--on-wall);
   opacity: 0.7;
