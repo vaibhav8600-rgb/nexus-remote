@@ -251,6 +251,9 @@ export class NexusLink {
 
   private queue(char: CharName, data: Bytes): Promise<void> {
     return new Promise((resolve, reject) => {
+      // Nothing waits for a link that is not there: a key or a keepalive
+      // queued during a drop would all go out at once on reconnect.
+      if (this.state !== 'connected') return reject(new Error('not connected'));
       this.jobs.push({ char, data, resolve, reject });
       this.pump();
     });
@@ -326,7 +329,8 @@ export class NexusLink {
   /** Queue text to type, in order with keys; handed over as NEXUS makes room. */
   typeText(raw: string) {
     const clean = sanitize(raw);
-    if (!clean) return;
+    // Same rule as keys: typed while there is no link, it is gone.
+    if (!clean || this.state !== 'connected') return;
     const last = this.jobs[this.jobs.length - 1];
     if (last && 'text' in last) last.text += clean;
     else this.jobs.push({ text: clean });

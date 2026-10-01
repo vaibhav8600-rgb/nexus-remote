@@ -42,6 +42,10 @@ function Hold(props: { act: number; label: string; className: string; disabled: 
   };
   // Leaving the panel mid-press still lets go.
   useEffect(() => release, []);
+  // So does the link dropping: a disabled button gets no pointer-up.
+  useEffect(() => {
+    if (props.disabled) release();
+  }, [props.disabled]);
 
   return (
     <button

@@ -34,7 +34,7 @@ under the strip on a real phone.
 
 | Phone | How |
 | --- | --- |
-| Android | Open the site in **Chrome**, tap **Connect**. Menu > **Add to Home screen** for a full-screen app. |
+| Android | **Not working yet**: pairing with NEXUS fails in Chrome. Being worked on; see the NEXUS repo's `docs/remote-input.md`. |
 | iPhone | Safari has no Web Bluetooth - open the site in **Bluefy** (free, App Store). |
 
 NEXUS needs `CONFIG_NEXUS_REMOTE_INPUT=y`; pairing and setup are in the
