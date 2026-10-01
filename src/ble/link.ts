@@ -132,11 +132,16 @@ export class NexusLink {
     if (!device?.gatt) return;
     this.set(this.state === 'reconnecting' ? 'reconnecting' : 'connecting');
     let reached = false;
+    // Which step failed, for the error line: "Connection failed" alone
+    // cannot say whether the radio, discovery or pairing went wrong.
+    let step = 'connect';
     try {
       const server = await device.gatt.connect();
+      step = 'find Remote Input';
       const service = await server.getPrimaryService(SERVICE).catch(() => {
         throw new Error('This NEXUS has no Remote Input. Flash firmware built with CONFIG_NEXUS_REMOTE_INPUT=y.');
       });
+      step = 'read characteristics';
       for (const name of Object.keys(CHAR) as CharName[]) {
         this.chars[name] = await service.getCharacteristic(CHAR[name]);
       }
@@ -157,6 +162,7 @@ export class NexusLink {
         return;
       }
       reached = false;
+      step = 'subscribe';
       status.addEventListener('characteristicvaluechanged', this.onNotify);
       await status.startNotifications();
       if (this.status && this.status.version !== PROTOCOL_VERSION) {
@@ -172,7 +178,7 @@ export class NexusLink {
     } catch (e) {
       this.chars = {};
       if (this.state === 'reconnecting' && !reached) throw e;
-      this.set('idle', message(e));
+      this.set('idle', `${message(e)} (${step}: ${detail(e)})`);
     }
   }
 
@@ -392,6 +398,13 @@ export class NexusLink {
 
 function sleep(ms: number) {
   return new Promise<void>((r) => setTimeout(r, ms));
+}
+
+/** The browser's own words for an error, whatever shape it came in. */
+function detail(e: unknown): string {
+  const err = e as { name?: string; message?: string };
+  const text = [err?.name, err?.message].filter(Boolean).join(' ');
+  return text || String(e) || 'no details';
 }
 
 function message(e: unknown): string {
