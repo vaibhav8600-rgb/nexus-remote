@@ -20,7 +20,8 @@ above it - so autocorrect, swipe typing and dictation all work.
   both at the top of the keys panel.
 - **Presentation**: big Previous and Next (PageUp/PageDown, which PowerPoint,
   Keynote, Google Slides and PDF viewers all take), Start, Black, End, a talk
-  timer, and an **air pointer** that moves the cursor as you turn the phone.
+  timer, and an **air pointer**: hold the phone upright, back toward the
+  screen, and point.
 - **Keyboard battery**: both halves' levels in Settings, and "Battery low" on
   the top bar when either is at 15 % or less.
 - **Landscape**: the open panel sits beside the trackpad instead of under it.
