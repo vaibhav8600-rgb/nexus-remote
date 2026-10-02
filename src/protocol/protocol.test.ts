@@ -47,7 +47,16 @@ describe('packets match the protocol doc', () => {
       textFree: 512,
       features: { text: true, consumer: true, hwheel: true, dongle: false },
       output: 0,
+      battLeft: null,
+      battRight: null,
     });
+  });
+
+  it('status with batteries', () => {
+    const s = decodeStatus(new DataView(bytes('01 03 02 00 02 2F 01 4E FF').buffer));
+    expect(s.features.batteries).toBe(true);
+    expect(s.battLeft).toBe(78);
+    expect(s.battRight).toBeNull();
   });
 
   it('status with dongle controls', () => {

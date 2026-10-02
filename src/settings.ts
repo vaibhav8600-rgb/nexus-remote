@@ -15,6 +15,7 @@ export interface Settings {
   haptics: boolean;
   keepAwake: boolean;
   theme: 'auto' | 'light' | 'dark';
+  snippets: string[]; // text typed with one tap, from the Keys panel
 }
 
 const DEFAULTS: Settings = {
@@ -29,6 +30,7 @@ const DEFAULTS: Settings = {
   haptics: true,
   keepAwake: true,
   theme: 'auto',
+  snippets: [],
 };
 
 const KEY = 'nexus.settings';

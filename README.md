@@ -11,9 +11,20 @@ Interface Guidelines, with Automatic, Light and Dark themes.
 One screen, like a laptop's trackpad: the whole background is the pad, a
 strip down the right edge scrolls, three buttons along the bottom click. The
 toolbar opens the rest in place - settings (≡), a media click wheel (▷),
-shortcuts and special keys (▭), NEXUS's own controls (🎮), and the phone's
-own keyboard (⌨) with a strip of Ctrl/Alt/Win/Esc/arrows above it - so
-autocorrect, swipe typing and dictation all work.
+shortcuts and special keys (▭), presentation (🖥), NEXUS's own controls (🎮),
+and the phone's own keyboard (⌨) with a strip of Ctrl/Alt/Win/Esc/arrows
+above it - so autocorrect, swipe typing and dictation all work.
+
+- **Paste from phone** types whatever is on the phone's clipboard, and
+  **snippets** - text you type often, kept in Settings - are one tap each,
+  both at the top of the keys panel.
+- **Presentation**: big Previous and Next (PageUp/PageDown, which PowerPoint,
+  Keynote, Google Slides and PDF viewers all take), Start, Black, End, a talk
+  timer, and an **air pointer** that moves the cursor as you turn the phone.
+- **Keyboard battery**: both halves' levels in Settings, and "Battery low" on
+  the top bar when either is at 15 % or less.
+- **Landscape**: the open panel sits beside the trackpad instead of under it.
+- **Haptics** on Android, and on iPhone (iOS 18+) from the tap itself.
 
 The NEXUS controls are the keyboard's game layer: a D-pad with OK, Rotate and
 Drop for the games on the dongle, Back, Home, Games, Menu and Host for its
@@ -24,10 +35,10 @@ firmware with dongle controls; older firmware gets a note instead.
 The colours are the NEXUS dongle's own: a deep indigo night lit by magenta
 and cyan with a mint accent, and a lavender daylight version of the same.
 
-| Trackpad | Keyboard | Keys | Media | NEXUS | Settings |
-| --- | --- | --- | --- | --- | --- |
-| <img src="docs/screenshots/trackpad-dark.png" width="150" alt="Trackpad, dark"> | <img src="docs/screenshots/keyboard-dark.png" width="150" alt="Keyboard strip, dark"> | <img src="docs/screenshots/keys-dark.png" width="150" alt="Shortcuts and special keys, dark"> | <img src="docs/screenshots/media-dark.png" width="150" alt="Media wheel, dark"> | <img src="docs/screenshots/dongle-dark.png" width="150" alt="NEXUS controls, dark"> | <img src="docs/screenshots/settings-dark.png" width="150" alt="Settings, dark"> |
-| <img src="docs/screenshots/trackpad-light.png" width="150" alt="Trackpad, light"> | <img src="docs/screenshots/keyboard-light.png" width="150" alt="Keyboard strip, light"> | <img src="docs/screenshots/keys-light.png" width="150" alt="Shortcuts and special keys, light"> | <img src="docs/screenshots/media-light.png" width="150" alt="Media wheel, light"> | <img src="docs/screenshots/dongle-light.png" width="150" alt="NEXUS controls, light"> | <img src="docs/screenshots/settings-light.png" width="150" alt="Settings, light"> |
+| Trackpad | Keyboard | Keys | Media | Present | NEXUS | Settings |
+| --- | --- | --- | --- | --- | --- | --- |
+| <img src="docs/screenshots/trackpad-dark.png" width="150" alt="Trackpad, dark"> | <img src="docs/screenshots/keyboard-dark.png" width="150" alt="Keyboard strip, dark"> | <img src="docs/screenshots/keys-dark.png" width="150" alt="Shortcuts and special keys, dark"> | <img src="docs/screenshots/media-dark.png" width="150" alt="Media wheel, dark"> | <img src="docs/screenshots/present-dark.png" width="150" alt="Presentation, dark"> | <img src="docs/screenshots/dongle-dark.png" width="150" alt="NEXUS controls, dark"> | <img src="docs/screenshots/settings-dark.png" width="150" alt="Settings, dark"> |
+| <img src="docs/screenshots/trackpad-light.png" width="150" alt="Trackpad, light"> | <img src="docs/screenshots/keyboard-light.png" width="150" alt="Keyboard strip, light"> | <img src="docs/screenshots/keys-light.png" width="150" alt="Shortcuts and special keys, light"> | <img src="docs/screenshots/media-light.png" width="150" alt="Media wheel, light"> | <img src="docs/screenshots/present-light.png" width="150" alt="Presentation, light"> | <img src="docs/screenshots/dongle-light.png" width="150" alt="NEXUS controls, light"> | <img src="docs/screenshots/settings-light.png" width="150" alt="Settings, light"> |
 
 The keyboard view is shown without the phone's own keyboard, which opens
 under the strip on a real phone.

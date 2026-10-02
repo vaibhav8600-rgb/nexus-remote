@@ -174,3 +174,11 @@ export const SaveIcon = () => (
     <path d="m5.5 12.5 4 4 9-9" />
   </Icon>
 );
+
+export const PresentIcon = () => (
+  <Icon>
+    <rect x="3" y="4" width="18" height="12" rx="2" />
+    <path d="M12 16v4M8.5 20h7" />
+    <path d="M10.5 8.2v3.6l3.2-1.8z" fill="currentColor" />
+  </Icon>
+);

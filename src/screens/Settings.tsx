@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { link } from '../ble/link';
 import type { HostOs } from '../protocol/hid';
 import { Ctrl } from '../protocol/packets';
@@ -6,9 +7,24 @@ import { ActionRow, Row, Section, Segmented, Slider, Switch, Tick } from '../ui'
 
 const times = (v: number) => `${v.toFixed(1)}×`;
 
+/** "L 78% · R 64%", with -- for a half NEXUS has not heard from. */
+function batteries(): string {
+  const st = link.status;
+  const pct = (v: number | null | undefined) => (v == null ? '--' : `${v}%`);
+  return `L ${pct(st?.battLeft)} · R ${pct(st?.battRight)}`;
+}
+
 export function SettingsSheet({ onClose }: { onClose: () => void }) {
   const s = useSettings();
   const connected = link.state === 'connected';
+  const [draft, setDraft] = useState('');
+
+  const addSnippet = () => {
+    const text = draft.trim();
+    if (!text) return;
+    updateSettings({ snippets: [...s.snippets, text] });
+    setDraft('');
+  };
 
   return (
     <div className="sheet-backdrop" onClick={onClose}>
@@ -23,13 +39,18 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
         <div className="sheet-body">
           <Section
             header="NEXUS"
-            footer="To pair a new phone, open Settings → PHONE on NEXUS, tap Connect, and enter the six digits NEXUS shows. If NEXUS is missing from the list later, do the same: a paired phone needs no code."
+            footer="To pair a new phone, open Settings → PHONE → PAIR on NEXUS, tap Connect, and enter the six digits NEXUS shows. If NEXUS is missing from the list later, do the same: a paired phone needs no code."
           >
             <Row label={connected ? link.name || 'NEXUS' : 'Not Connected'}>
               <span className="cell-value">
                 {connected ? (link.status?.remoteOn ? 'Connected' : 'Remote off') : ''}
               </span>
             </Row>
+            {connected && link.status?.features.batteries && (
+              <Row label="Keyboard Battery">
+                <span className="cell-value">{batteries()}</span>
+              </Row>
+            )}
             {link.state === 'idle' ? (
               <ActionRow label="Connect" onClick={() => void link.pick()} />
             ) : (
@@ -46,6 +67,35 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
               disabled={!link.name}
               onClick={() => void link.forget()}
             />
+          </Section>
+
+          <Section
+            header="Snippets"
+            footer="Text you type often - an email address, a sign-off. Each one is a tile in the Keys panel; one tap types it."
+          >
+            {s.snippets.map((t, i) => (
+              <Row key={i} label={<span className="snippet-text">{t}</span>}>
+                <button
+                  className="text-button destructive"
+                  aria-label={`Remove ${t}`}
+                  onClick={() => updateSettings({ snippets: s.snippets.filter((_, j) => j !== i) })}
+                >
+                  Remove
+                </button>
+              </Row>
+            ))}
+            <div className="cell">
+              <input
+                className="snippet-input"
+                placeholder="New snippet"
+                value={draft}
+                onChange={(e) => setDraft(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && addSnippet()}
+              />
+              <button className="text-button bold" disabled={!draft.trim()} onClick={addSnippet}>
+                Add
+              </button>
+            </div>
           </Section>
 
           <Section header="Appearance">

@@ -156,7 +156,7 @@ export class NexusLink {
         device.gatt.disconnect();
         this.set(
           'idle',
-          'NEXUS did not accept this phone. If NEXUS is listed in your phone’s Bluetooth settings, tap it and Forget This Device. Then on NEXUS open Settings → PHONE, tap Connect within 60 seconds and enter the six digits it shows.',
+          'NEXUS did not accept this phone. If NEXUS is listed in your phone’s Bluetooth settings, tap it and Forget This Device. Then on NEXUS open Settings → PHONE → PAIR, tap Connect within 60 seconds and enter the six digits it shows.',
         );
         return;
       }

@@ -97,10 +97,16 @@ export interface Status {
   capsLock: boolean;
   scrollLock: boolean;
   textFree: number;
-  features: { text: boolean; consumer: boolean; hwheel: boolean; dongle: boolean; host: boolean };
+  features: { text: boolean; consumer: boolean; hwheel: boolean; dongle: boolean; host: boolean; batteries: boolean };
   /** Output.usb or Output.ble; 0 from firmware without dongle controls. */
   output: number;
+  /** The halves' battery, 0-100; null when unknown or not reported. */
+  battLeft: number | null;
+  battRight: number | null;
 }
+
+/** 0xFF is the protocol's "unknown", and older firmware sends no byte at all. */
+const percent = (d: DataView, i: number) => (d.byteLength > i && d.getUint8(i) <= 100 ? d.getUint8(i) : null);
 
 export function decodeStatus(data: DataView): Status {
   const state = data.getUint8(1);
@@ -122,7 +128,10 @@ export function decodeStatus(data: DataView): Status {
       hwheel: !!(feat & 4),
       dongle: !!(feat & 8),
       host: !!(feat & 16),
+      batteries: !!(feat & 32),
     },
     output: data.byteLength > 6 ? data.getUint8(6) : 0,
+    battLeft: percent(data, 7),
+    battRight: percent(data, 8),
   };
 }

@@ -720,6 +720,23 @@ button.cell:active:not(:disabled) {
   grid-template-columns: repeat(auto-fill, minmax(58px, 1fr));
   margin-top: 16px;
 }
+.tiles.spaced {
+  margin-top: 16px;
+}
+/* Paste and snippets: text, so a little wider and left-aligned to read. */
+.text-tile {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.text-tile.wide {
+  grid-column: span 2;
+}
+.panel-note {
+  margin: 10px 2px 0;
+  font-size: 13px;
+  color: var(--secondary);
+}
 .tile {
   min-height: 44px;
   padding: 0 8px;
@@ -1074,4 +1091,140 @@ button.cell:active:not(:disabled) {
   margin: 0;
   opacity: 0;
   pointer-events: none;
+}
+
+/* ---- snippets (Settings) ------------------------------------------------- */
+.snippet-text {
+  display: block;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.snippet-input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  color: var(--label);
+  font: inherit;
+  font-size: 17px;
+  outline: none;
+}
+.text-button.destructive {
+  color: var(--red);
+}
+.text-button:disabled {
+  opacity: 0.4;
+}
+
+/* ---- presentation --------------------------------------------------------- */
+.present-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px max(16px, env(safe-area-inset-right)) 14px max(16px, env(safe-area-inset-left));
+  background: var(--glass-soft);
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+}
+.present-row {
+  display: grid;
+  grid-template-columns: 1fr 1.6fr; /* Next is the one you hit blind */
+  gap: 12px;
+}
+.present-big {
+  min-height: 112px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  border-radius: 22px;
+  background: var(--glass);
+  box-shadow: var(--shadow);
+  font-size: 34px;
+  color: var(--on-wall);
+}
+.present-big span {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--secondary);
+}
+.present-big.next {
+  background: var(--tint);
+  color: var(--tint-on);
+}
+.present-big.next span {
+  color: var(--tint-on);
+  opacity: 0.8;
+}
+.present-big:active {
+  filter: brightness(0.9);
+}
+.present-tools {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+.present-timer {
+  font-variant-numeric: tabular-nums;
+  color: var(--secondary);
+}
+.present-timer.running {
+  color: var(--tint);
+}
+.present-air {
+  min-height: 44px;
+  border-radius: 12px;
+  background: var(--cell);
+  font-size: 15px;
+  font-weight: 600;
+}
+.present-air.on {
+  background: var(--tint);
+  color: var(--tint-on);
+}
+
+/* ---- landscape phones: the panel beside the trackpad, not under it -------- */
+@media (orientation: landscape) and (max-height: 500px) {
+  .app {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 44%);
+    grid-template-rows: auto minmax(0, 1fr) auto auto;
+  }
+  .top {
+    grid-column: 1 / -1;
+    grid-row: 1;
+  }
+  .surface {
+    grid-column: 1;
+    grid-row: 2;
+  }
+  /* No panel open: the trackpad takes the whole width. */
+  .app:not(:has(.media-panel, .keys-panel, .present-panel, .dongle-panel)) .surface {
+    grid-column: 1 / -1;
+  }
+  .media-panel,
+  .keys-panel,
+  .present-panel,
+  .dongle-panel {
+    grid-column: 2;
+    grid-row: 2;
+    max-height: none;
+    overflow-y: auto;
+    border-top: 0;
+    border-left: 0.5px solid var(--separator);
+  }
+  .typing,
+  .key-strip {
+    grid-column: 1 / -1;
+    grid-row: 3;
+  }
+  .toolbar {
+    grid-column: 1 / -1;
+    grid-row: 4;
+  }
+  .present-big {
+    min-height: 84px;
+  }
 }

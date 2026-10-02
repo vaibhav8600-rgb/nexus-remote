@@ -165,7 +165,7 @@ function ConnectCard() {
         <Tick />
         Connect to NEXUS
       </button>
-      <span className="connect-help">Not in the list? On NEXUS open Settings → PHONE, then try again.</span>
+      <span className="connect-help">Not in the list? On NEXUS open Settings → PHONE → PAIR, then try again.</span>
     </div>
   );
 }

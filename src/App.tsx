@@ -1,19 +1,20 @@
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from 'react';
 import { NexusLink, link } from './ble/link';
 import { MouseSender } from './ble/mouse';
-import { ChevronRight, GamepadIcon, KeyboardIcon, MediaIcon, MenuIcon, MonitorIcon, WindowIcon } from './icons';
+import { ChevronRight, GamepadIcon, KeyboardIcon, MediaIcon, MenuIcon, MonitorIcon, PresentIcon, WindowIcon } from './icons';
 import { NO_MODS, consumeMods, tapMod, type ModState } from './protocol/mods';
 import { Ctrl, Page } from './protocol/packets';
 import { DonglePanel } from './screens/DonglePanel';
 import { KeyStrip, LiveInput } from './screens/KeyboardBar';
 import { KeysPanel } from './screens/KeysPanel';
 import { MediaPanel } from './screens/MediaPanel';
+import { PresentPanel } from './screens/PresentPanel';
 import { SettingsSheet } from './screens/Settings';
 import { Trackpad } from './screens/Trackpad';
 import { haptic, useSettings } from './settings';
 import { Tick } from './ui';
 
-type Panel = 'none' | 'keyboard' | 'media' | 'keys' | 'dongle';
+type Panel = 'none' | 'keyboard' | 'media' | 'keys' | 'present' | 'dongle';
 
 export interface Ctx {
   mouse: MouseSender;
@@ -206,6 +207,7 @@ export function App() {
       {panel === 'media' && <MediaPanel ctx={ctx} onClose={() => setPanel('none')} />}
       {panel === 'keys' && <KeysPanel ctx={ctx} />}
       {panel === 'keyboard' && <KeyStrip ctx={ctx} />}
+      {panel === 'present' && <PresentPanel ctx={ctx} />}
       {panel === 'dongle' && <DonglePanel />}
 
       <nav className="toolbar">
@@ -213,6 +215,7 @@ export function App() {
         <span className="toolbar-divider" />
         {tool('media', 'Media controls', <MediaIcon />)}
         {tool('keys', 'Shortcuts and keys', <WindowIcon />)}
+        {tool('present', 'Presentation', <PresentIcon />)}
         {tool('dongle', 'NEXUS controls', <GamepadIcon />)}
         {tool('keyboard', 'Keyboard', <KeyboardIcon />)}
         <LiveInput
@@ -226,6 +229,11 @@ export function App() {
       {settingsOpen && <SettingsSheet onClose={() => setSettingsOpen(false)} />}
     </div>
   );
+}
+
+/** Either half at 15 % or less - where the NEXUS dashboard turns red. */
+function lowBattery(s: typeof link.status): boolean {
+  return [s?.battLeft, s?.battRight].some((v) => v != null && v <= 15);
 }
 
 /** Which NEXUS, in a glass pill at the top; tap to connect or for settings. */
@@ -256,6 +264,7 @@ function DevicePill({ onOpen }: { onOpen: () => void }) {
       <span className="device-name">{label}</span>
       {link.state === 'connected' && !s?.remoteOn && <span className="device-note">Remote off</span>}
       {link.state === 'connected' && s?.capsLock && <span className="device-note">Caps</span>}
+      {link.state === 'connected' && lowBattery(s) && <span className="device-note">Battery low</span>}
       <ChevronRight />
     </button>
   );
