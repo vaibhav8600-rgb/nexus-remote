@@ -5,6 +5,7 @@ import { ChevronDown, ChevronUp } from '../icons';
 import { Gestures, type Intent } from '../protocol/gestures';
 import { Button, KeyAction, Page } from '../protocol/packets';
 import { haptic, useSettings } from '../settings';
+import { Tick } from '../ui';
 
 /** Finger travel on the side strip per wheel notch, before the speed setting. */
 const STRIP_PX = 18;
@@ -122,18 +123,26 @@ export function Trackpad({ ctx, echo, buttons }: { ctx: Ctx; echo: string; butto
 
       <div className={buttons ? 'scroll-strip' : 'scroll-strip full'} aria-label="Scroll" {...strip}>
         <button aria-label="Scroll up" onPointerDown={(e) => e.stopPropagation()} onClick={() => notch(true)}>
+          <Tick />
           <ChevronUp />
         </button>
         <button aria-label="Scroll down" onPointerDown={(e) => e.stopPropagation()} onClick={() => notch(false)}>
+          <Tick />
           <ChevronDown />
         </button>
       </div>
 
       {buttons && (
         <div className="mouse-buttons">
-          <button aria-label="Left click" {...hold(Button.left)} />
-          <button aria-label="Middle click" {...hold(Button.middle)} />
-          <button aria-label="Right click" {...hold(Button.right)} />
+          <button aria-label="Left click" {...hold(Button.left)}>
+            <Tick />
+          </button>
+          <button aria-label="Middle click" {...hold(Button.middle)}>
+            <Tick />
+          </button>
+          <button aria-label="Right click" {...hold(Button.right)}>
+            <Tick />
+          </button>
         </div>
       )}
     </div>
@@ -153,6 +162,7 @@ function ConnectCard() {
           void link.pick();
         }}
       >
+        <Tick />
         Connect to NEXUS
       </button>
       <span className="connect-help">Not in the list? On NEXUS open Settings → PHONE, then try again.</span>

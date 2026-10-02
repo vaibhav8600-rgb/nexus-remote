@@ -67,32 +67,6 @@ export function useSettings(): Settings {
 /** Long enough to feel on Android's weaker motors; 8 ms often was not. */
 const VIBRATE_MS = 15;
 
-let tick: HTMLLabelElement | undefined;
-
-/**
- * iOS has no Vibration API - navigator.vibrate is simply absent in WebKit,
- * Bluefy included. Since iOS 18 WebKit plays the system haptic when a switch
- * checkbox flips, and clicking its label flips it, so one hidden switch does
- * the job. Older iOS: nothing, as before.
- */
-function iosTick() {
-  if (!tick) {
-    tick = document.createElement('label');
-    tick.setAttribute('aria-hidden', 'true');
-    tick.style.cssText = 'position:fixed;left:-100px;width:1px;height:1px;overflow:hidden;opacity:0;pointer-events:none';
-    const sw = document.createElement('input');
-    sw.type = 'checkbox';
-    sw.setAttribute('switch', '');
-    sw.tabIndex = -1;
-    tick.append(sw);
-    document.body.append(tick);
-  }
-  // Keep the phone keyboard up: a tap on the key strip must not take focus.
-  const focused = document.activeElement as HTMLElement | null;
-  tick.click();
-  if (focused && document.activeElement !== focused) focused.focus({ preventScroll: true });
-}
-
 /**
  * iPhone and iPad, Safari or not - every iOS browser is WebKit. Checked by
  * platform rather than by navigator.vibrate, which a wrapper app like Bluefy
@@ -109,8 +83,11 @@ export const hapticMethod: 'vibrate' | 'ios-switch' | 'none' = IOS
     ? 'vibrate'
     : 'none';
 
+/** Android's haptic. On iOS the tap itself does it, through <Tick> (ui.tsx). */
 export function haptic(force = false) {
-  if (!current.haptics && !force) return;
-  if (hapticMethod === 'ios-switch') iosTick();
-  else if (hapticMethod === 'vibrate') navigator.vibrate(VIBRATE_MS);
+  if ((current.haptics || force) && hapticMethod === 'vibrate') navigator.vibrate(VIBRATE_MS);
+}
+
+export function hapticsOn(): boolean {
+  return current.haptics;
 }

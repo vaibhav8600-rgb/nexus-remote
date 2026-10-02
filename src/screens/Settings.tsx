@@ -2,7 +2,7 @@ import { link } from '../ble/link';
 import type { HostOs } from '../protocol/hid';
 import { Ctrl } from '../protocol/packets';
 import { haptic, hapticMethod, updateSettings, useSettings, type Settings } from '../settings';
-import { ActionRow, Row, Section, Segmented, Slider, Switch } from '../ui';
+import { ActionRow, Row, Section, Segmented, Slider, Switch, Tick } from '../ui';
 
 const times = (v: number) => `${v.toFixed(1)}×`;
 
@@ -142,7 +142,10 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
             }
           >
             <Switch label="Haptics" checked={s.haptics} onChange={(haptics) => updateSettings({ haptics })} />
-            <ActionRow label="Test Haptics" onClick={() => haptic(true)} />
+            <button className="cell action" onClick={() => haptic(true)}>
+              <Tick always />
+              Test Haptics
+            </button>
             <Switch
               label="Keep Screen Awake"
               checked={s.keepAwake}

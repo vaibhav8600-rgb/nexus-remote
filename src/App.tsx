@@ -11,6 +11,7 @@ import { MediaPanel } from './screens/MediaPanel';
 import { SettingsSheet } from './screens/Settings';
 import { Trackpad } from './screens/Trackpad';
 import { haptic, useSettings } from './settings';
+import { Tick } from './ui';
 
 type Panel = 'none' | 'keyboard' | 'media' | 'keys' | 'dongle';
 
@@ -177,6 +178,7 @@ export function App() {
         } else toggle(p);
       }}
     >
+      <Tick />
       {icon}
     </button>
   );
@@ -249,6 +251,7 @@ function DevicePill({ onOpen }: { onOpen: () => void }) {
 
   return (
     <button className={`device-pill ${tone}`} onClick={onClick}>
+      <Tick />
       <MonitorIcon />
       <span className="device-name">{label}</span>
       {link.state === 'connected' && !s?.remoteOn && <span className="device-note">Remote off</span>}

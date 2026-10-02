@@ -16,7 +16,7 @@ import {
 } from '../icons';
 import { Act, Ctrl, Output } from '../protocol/packets';
 import { haptic } from '../settings';
-import { Segmented } from '../ui';
+import { Segmented, Tick } from '../ui';
 
 /** Sent while a button is held: the same 250 ms the dongle's hold timeout
  *  (1 s) is documented against. */
@@ -53,8 +53,9 @@ function Hold(props: { act: number; label: string; className: string; disabled: 
       className={`${props.className}${down ? ' held' : ''}`}
       aria-label={props.label}
       disabled={props.disabled}
-      onPointerDown={(e) => {
-        e.currentTarget.setPointerCapture(e.pointerId);
+      onPointerDown={() => {
+        // No setPointerCapture: a touch is captured to what it landed on
+        // anyway, and that has to stay the Tick for iOS to play its haptic.
         haptic();
         held.current = true;
         setDown(true);
@@ -63,7 +64,7 @@ function Hold(props: { act: number; label: string; className: string; disabled: 
       }}
       onPointerUp={release}
       onPointerCancel={release}
-      onLostPointerCapture={release}
+      onPointerLeave={release /* a mouse sliding off; a touch stays captured */}
       onKeyDown={(e) => {
         if (e.key !== 'Enter' && e.key !== ' ') return;
         e.preventDefault();
@@ -72,6 +73,7 @@ function Hold(props: { act: number; label: string; className: string; disabled: 
       }}
       onContextMenu={(e) => e.preventDefault()}
     >
+      <Tick />
       {props.children}
     </button>
   );

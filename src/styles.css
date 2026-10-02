@@ -1054,3 +1054,24 @@ button.cell:active:not(:disabled) {
     display: none;
   }
 }
+
+/* ---- the iPhone haptic (<Tick>, ui.tsx) ----------------------------------- */
+/* Zero specificity: a button positioned by its own class keeps that. */
+:where(button:has(> .tick)) {
+  position: relative;
+}
+.tick {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border-radius: inherit;
+  -webkit-tap-highlight-color: transparent;
+}
+.tick input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  opacity: 0;
+  pointer-events: none;
+}
