@@ -74,7 +74,7 @@ const VIBRATE_MS = 15;
  * platform rather than by navigator.vibrate, which a wrapper app like Bluefy
  * can define as a stub that does nothing.
  */
-const IOS =
+export const IOS =
   typeof navigator !== 'undefined' &&
   (/iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1));
 

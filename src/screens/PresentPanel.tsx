@@ -3,7 +3,7 @@ import type { Ctx } from '../App';
 import { ChevronLeft, ChevronRight } from '../icons';
 import { KEY, letter } from '../protocol/hid';
 import { Mod, Page } from '../protocol/packets';
-import { haptic, useSettings } from '../settings';
+import { IOS, haptic, useSettings } from '../settings';
 import { Tick } from '../ui';
 
 /** Pixels per degree the phone turns, before Tracking Speed. */
@@ -14,11 +14,21 @@ const AIR_MAX_DT = 0.05;
 type MotionPermission = { requestPermission?: () => Promise<'granted' | 'denied'> };
 
 /**
- * Point by turning the phone, held like a remote with its top toward the
- * screen: turning left and right spins it about its own z axis, tilting up and
- * down about its x axis. The gyroscope's rotation rate, times the time since
- * the last sample, is the angle moved - nothing drifts while it is still.
+ * Point with the phone held upright, its back toward the screen: turning it
+ * left and right spins it about its own y axis (up the screen), tilting it up
+ * and down about its x axis (across the screen). The gyroscope's rotation
+ * rate, times the time since the last sample, is the angle moved - nothing
+ * drifts while it is still.
+ *
+ * Which field carries which axis depends on the engine. The spec, and Chrome,
+ * put the z rate in alpha, x in beta and y in gamma; WebKit - every iOS
+ * browser - reports x in alpha, y in beta and z in gamma. Taking the wrong
+ * pair turned "point up" into a move to the left, as seen on an iPhone.
  */
+function rates(r: DeviceMotionEventRotationRate): { x: number; y: number } {
+  return IOS ? { x: r.alpha ?? 0, y: r.beta ?? 0 } : { x: r.beta ?? 0, y: r.gamma ?? 0 };
+}
+
 function useAirPointer(ctx: Ctx, speed: number) {
   const [on, setOn] = useState(false);
   const last = useRef(0);
@@ -32,7 +42,10 @@ function useAirPointer(ctx: Ctx, speed: number) {
       const dt = last.current ? Math.min((e.timeStamp - last.current) / 1000, AIR_MAX_DT) : 0;
       last.current = e.timeStamp;
       const gain = AIR_GAIN * speed * dt;
-      ctx.mouse.move(-(r.alpha ?? 0) * gain, -(r.beta ?? 0) * gain);
+      const { x, y } = rates(r);
+      // Turning right is a negative turn about y and should move right;
+      // tilting up is a positive turn about x and should move up (-y).
+      ctx.mouse.move(-y * gain, -x * gain);
     };
     window.addEventListener('devicemotion', onMotion);
     return () => window.removeEventListener('devicemotion', onMotion);
@@ -136,7 +149,7 @@ export function PresentPanel({ ctx }: { ctx: Ctx }) {
         }}
       >
         <Tick />
-        {air.on ? 'Air pointer on - turn the phone to point. Tap to stop.' : 'Air pointer'}
+        {air.on ? 'Air pointer on - hold the phone upright and point. Tap to stop.' : 'Air pointer'}
       </button>
       {note && (
         <p className="panel-note" onClick={() => setNote('')}>
