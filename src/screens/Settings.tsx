@@ -1,7 +1,7 @@
 import { link } from '../ble/link';
 import type { HostOs } from '../protocol/hid';
 import { Ctrl } from '../protocol/packets';
-import { updateSettings, useSettings, type Settings } from '../settings';
+import { haptic, hapticMethod, updateSettings, useSettings, type Settings } from '../settings';
 import { ActionRow, Row, Section, Segmented, Slider, Switch } from '../ui';
 
 const times = (v: number) => `${v.toFixed(1)}×`;
@@ -131,8 +131,18 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
             />
           </Section>
 
-          <Section header="General">
+          <Section
+            header="General"
+            footer={
+              hapticMethod === 'ios-switch'
+                ? 'Haptics on iPhone use the system tick, iOS 18 or later, with System Haptics on in Sounds & Haptics. Some browsers block it.'
+                : hapticMethod === 'none'
+                  ? 'This browser cannot vibrate.'
+                  : undefined
+            }
+          >
             <Switch label="Haptics" checked={s.haptics} onChange={(haptics) => updateSettings({ haptics })} />
+            <ActionRow label="Test Haptics" onClick={() => haptic(true)} />
             <Switch
               label="Keep Screen Awake"
               checked={s.keepAwake}

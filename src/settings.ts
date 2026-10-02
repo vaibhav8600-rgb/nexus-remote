@@ -93,8 +93,24 @@ function iosTick() {
   if (focused && document.activeElement !== focused) focused.focus({ preventScroll: true });
 }
 
-export function haptic() {
-  if (!current.haptics) return;
-  if (navigator.vibrate) navigator.vibrate(VIBRATE_MS);
-  else iosTick();
+/**
+ * iPhone and iPad, Safari or not - every iOS browser is WebKit. Checked by
+ * platform rather than by navigator.vibrate, which a wrapper app like Bluefy
+ * can define as a stub that does nothing.
+ */
+const IOS =
+  typeof navigator !== 'undefined' &&
+  (/iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1));
+
+/** How this browser does haptics, for Settings to show. */
+export const hapticMethod: 'vibrate' | 'ios-switch' | 'none' = IOS
+  ? 'ios-switch'
+  : typeof navigator !== 'undefined' && 'vibrate' in navigator
+    ? 'vibrate'
+    : 'none';
+
+export function haptic(force = false) {
+  if (!current.haptics && !force) return;
+  if (hapticMethod === 'ios-switch') iosTick();
+  else if (hapticMethod === 'vibrate') navigator.vibrate(VIBRATE_MS);
 }
