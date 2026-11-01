@@ -18,6 +18,11 @@ let turns: Turn[] = [];
 let log: Msg[] = [];
 let trick: ReturnType<typeof setTimeout> | undefined;
 
+/** Shorter than this is a tap (listen until the next tap), longer a hold. */
+const TAP_MS = 400;
+/** Talking stops by itself after this. */
+const TALK_MAX_MS = 30000;
+
 /** A trick's steps to the dongle, about two seconds apart. A new one cuts
  *  off any still playing. */
 function play(steps: string[][]) {
@@ -54,42 +59,67 @@ export function BuddyPanel() {
     setMsgs(log);
   };
 
-  // Push-to-talk: held, the dongle listens; released, Gemini writes down
+  // Talk, two ways on one button. Hold it and speak, and letting go sends;
+  // or tap it, speak, and tap again to send. Either way Gemini writes down
   // what was said and it goes through send() like anything typed.
   const [listening, setListening] = useState(false);
+  const [tapped, setTapped] = useState(false); // listening until the next tap
   const mic = useRef(new Mic());
   const held = useRef(false); // the button is down
+  const latched = useRef(false); // tapped: stays on after the finger lifts
   const starting = useRef(false); // the mic is still opening
+  const pressedAt = useRef(0);
+  const cap = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   const talk = async () => {
+    if (latched.current) {
+      // The second tap. While the mic is still opening (a permission
+      // prompt, a slow first start), talk() below finishes once it is open.
+      if (starting.current) latched.current = false;
+      else void finish();
+      return;
+    }
     if (busy || held.current || starting.current) return;
     haptic();
     held.current = true;
     starting.current = true;
+    pressedAt.current = Date.now();
     setListening(true);
     if (faceUp()) void link.buddy('B 1\nE LISTENING\n').catch(() => undefined);
     try {
       await mic.current.start();
     } catch {
-      held.current = starting.current = false;
+      held.current = latched.current = starting.current = false;
       setListening(false);
+      setTapped(false);
       add({ from: 'note', text: 'The microphone was not allowed. Use the keyboard’s microphone instead.' });
       return;
     }
     starting.current = false;
-    // Let go while the mic was opening (the permission prompt): finish now.
-    if (!held.current) void finish();
+    // A forgotten tap must not leave the mic on.
+    cap.current = setTimeout(() => void finish(), TALK_MAX_MS);
+    // Held and let go while the mic was opening (the permission prompt).
+    if (!held.current && !latched.current) void finish();
   };
 
-  /** The button let go - up, cancelled or slid off, whichever comes first. */
+  /** The finger lifted - up, cancelled or slid off, whichever comes first. */
   const release = () => {
     if (!held.current) return;
     held.current = false;
+    if (Date.now() - pressedAt.current < TAP_MS) {
+      latched.current = true; // a tap: keep listening
+      setTapped(true);
+      return;
+    }
     if (!starting.current) void finish();
   };
 
   const finish = async () => {
+    if (!listening && !latched.current && !held.current && !starting.current) return;
+    clearTimeout(cap.current);
+    held.current = latched.current = false;
     setListening(false);
+    setTapped(false);
     const clip = await mic.current.stop();
     if (!clip) {
       if (faceUp()) void link.buddy('E NEUTRAL\n').catch(() => undefined);
@@ -100,7 +130,7 @@ export function BuddyPanel() {
       const said = await transcribe(s.geminiKey, clip);
       setBusy(false);
       if (said) await send(said);
-      else add({ from: 'note', text: 'I didn’t catch that. Hold the button while you talk.' });
+      else add({ from: 'note', text: 'I didn’t catch that. Hold the button, or tap it, while you talk.' });
     } catch (e) {
       add({ from: 'note', text: (e as Error).message });
     } finally {
@@ -194,7 +224,7 @@ export function BuddyPanel() {
         {Mic.supported() && (
           <button
             className={`buddy-mic${listening ? ' on' : ''}`}
-            aria-label="Hold to talk"
+            aria-label={tapped ? 'Tap to send' : 'Tap or hold to talk'}
             aria-pressed={listening}
             disabled={busy}
             onPointerDown={(e) => {
@@ -212,7 +242,7 @@ export function BuddyPanel() {
         )}
         <input
           enterKeyHint="send"
-          placeholder={listening ? 'Listening… let go to send' : `Message ${BUDDY_NAME}`}
+          placeholder={tapped ? 'Listening… tap the mic to send' : listening ? 'Listening… let go to send' : `Message ${BUDDY_NAME}`}
           aria-label={`Message ${BUDDY_NAME}`}
           maxLength={500}
           value={draft}
