@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { link } from '../ble/link';
-import { BUDDY_NAME, ask, clockLines, command, faceLines, remember, type Turn } from '../buddy/brain';
+import { BUDDY_NAME, ask, clockLines, command, faceLines, remember, transcribe, type Turn } from '../buddy/brain';
+import { Mic } from '../buddy/mic';
+import { MicIcon } from '../icons';
 import { haptic, updateSettings, useSettings } from '../settings';
 import { Tick } from '../ui';
 
@@ -52,11 +54,65 @@ export function BuddyPanel() {
     setMsgs(log);
   };
 
-  const send = async () => {
-    const said = draft.trim();
-    if (!said || busy) return;
+  // Push-to-talk: held, the dongle listens; released, Gemini writes down
+  // what was said and it goes through send() like anything typed.
+  const [listening, setListening] = useState(false);
+  const mic = useRef(new Mic());
+  const held = useRef(false); // the button is down
+  const starting = useRef(false); // the mic is still opening
+
+  const talk = async () => {
+    if (busy || held.current || starting.current) return;
     haptic();
-    setDraft('');
+    held.current = true;
+    starting.current = true;
+    setListening(true);
+    if (faceUp()) void link.buddy('B 1\nE LISTENING\n').catch(() => undefined);
+    try {
+      await mic.current.start();
+    } catch {
+      held.current = starting.current = false;
+      setListening(false);
+      add({ from: 'note', text: 'The microphone was not allowed. Use the keyboard’s microphone instead.' });
+      return;
+    }
+    starting.current = false;
+    // Let go while the mic was opening (the permission prompt): finish now.
+    if (!held.current) void finish();
+  };
+
+  /** The button let go - up, cancelled or slid off, whichever comes first. */
+  const release = () => {
+    if (!held.current) return;
+    held.current = false;
+    if (!starting.current) void finish();
+  };
+
+  const finish = async () => {
+    setListening(false);
+    const clip = await mic.current.stop();
+    if (!clip) {
+      if (faceUp()) void link.buddy('E NEUTRAL\n').catch(() => undefined);
+      return;
+    }
+    setBusy(true);
+    try {
+      const said = await transcribe(s.geminiKey, clip);
+      setBusy(false);
+      if (said) await send(said);
+      else add({ from: 'note', text: 'I didn’t catch that. Hold the button while you talk.' });
+    } catch (e) {
+      add({ from: 'note', text: (e as Error).message });
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const send = async (text = draft) => {
+    const said = text.trim();
+    if (!said) return;
+    haptic();
+    if (text === draft) setDraft('');
     add({ from: 'you', text: said });
     // A face or a trick: acted out at once, no Gemini.
     const c = command(said);
@@ -135,14 +191,33 @@ export function BuddyPanel() {
         <div ref={end} />
       </div>
       <div className="buddy-input">
+        {Mic.supported() && (
+          <button
+            className={`buddy-mic${listening ? ' on' : ''}`}
+            aria-label="Hold to talk"
+            aria-pressed={listening}
+            disabled={busy}
+            onPointerDown={(e) => {
+              e.preventDefault(); // no focus, no text selection on a long press
+              void talk();
+            }}
+            onPointerUp={release}
+            onPointerCancel={release}
+            onPointerLeave={release}
+            onContextMenu={(e) => e.preventDefault()}
+          >
+            <Tick />
+            <MicIcon />
+          </button>
+        )}
         <input
           enterKeyHint="send"
-          placeholder={`Message ${BUDDY_NAME}`}
+          placeholder={listening ? 'Listening… let go to send' : `Message ${BUDDY_NAME}`}
           aria-label={`Message ${BUDDY_NAME}`}
           maxLength={500}
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && void send()}
+          onKeyDown={(e) => e.key === 'Enter' && !busy && void send()}
         />
         <button className="text-button bold" disabled={!draft.trim() || busy} onClick={() => void send()}>
           <Tick />

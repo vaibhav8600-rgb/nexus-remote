@@ -133,14 +133,14 @@ export function command(text: string, p = persona): Command | null {
   return null;
 }
 
-/** Ask Gemini. Throws an Error whose message is fit to show. */
-export async function ask(key: string, history: Turn[], said: string): Promise<Answer> {
+/** One generateContent call. Throws an Error whose message is fit to show. */
+async function post(key: string, body: unknown): Promise<unknown> {
   let res: Response;
   try {
     res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
-      body: JSON.stringify(requestBody(history, said)),
+      body: JSON.stringify(body),
     });
   } catch {
     throw new Error('No internet - Gemini could not be reached.');
@@ -148,7 +148,40 @@ export async function ask(key: string, history: Turn[], said: string): Promise<A
   if (res.status === 429) throw new Error('Out of Gemini quota for now. Try again in a few minutes.');
   if (res.status === 400 || res.status === 403) throw new Error('Gemini refused the key. Check it in Settings → Buddy.');
   if (!res.ok) throw new Error(`Gemini answered HTTP ${res.status}.`);
-  const a = parseReply(await res.json().catch(() => null));
+  return res.json().catch(() => null);
+}
+
+/** Ask Gemini. Throws an Error whose message is fit to show. */
+export async function ask(key: string, history: Turn[], said: string): Promise<Answer> {
+  const a = parseReply(await post(key, requestBody(history, said)));
   if (!a) throw new Error('Gemini’s answer did not fit the dongle. Ask again?');
   return a;
+}
+
+/** Base64 of bytes, in slices: one String.fromCharCode over a whole clip
+ *  overflows the call stack. */
+export function base64(bytes: Uint8Array): string {
+  let s = '';
+  for (let i = 0; i < bytes.length; i += 0x8000) s += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+  return btoa(s);
+}
+
+/** What was said in a WAV clip, word for word; '' for no speech. */
+export async function transcribe(key: string, clip: Uint8Array): Promise<string> {
+  const raw = await post(key, {
+    contents: [
+      {
+        role: 'user',
+        parts: [
+          { inlineData: { mimeType: 'audio/wav', data: base64(clip) } },
+          {
+            text: 'Transcribe exactly what is said, in the language spoken. Reply with the words only - no quotes, no notes. If nothing is said, reply with nothing.',
+          },
+        ],
+      },
+    ],
+    generationConfig: { temperature: 0, maxOutputTokens: 200 },
+  });
+  const r = raw as { candidates?: { content?: { parts?: { text?: string }[] } }[] } | null;
+  return (r?.candidates?.[0]?.content?.parts?.[0]?.text ?? '').trim();
 }
