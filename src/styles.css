@@ -750,6 +750,86 @@ button.cell:active:not(:disabled) {
   background: var(--cell-pressed);
 }
 
+/* ---- Buddy: a chat with the face on the dongle ------------------------- */
+.buddy-panel {
+  max-height: 55%;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px max(12px, env(safe-area-inset-right)) 12px max(12px, env(safe-area-inset-left));
+  background: var(--bar);
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+  border-top: 0.5px solid var(--separator);
+}
+.buddy-log {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.bubble {
+  max-width: 82%;
+  padding: 8px 12px;
+  border-radius: 18px;
+  font-size: 16px;
+  overflow-wrap: anywhere;
+}
+.bubble.you {
+  align-self: flex-end;
+  background: var(--tint);
+  color: var(--tint-on);
+}
+.bubble.buddy {
+  align-self: flex-start;
+  background: var(--cell);
+}
+.bubble.note {
+  align-self: center;
+  font-size: 13px;
+  color: var(--secondary);
+}
+.bubble.thinking {
+  color: var(--secondary);
+}
+.bubble-who {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: capitalize;
+  color: var(--secondary);
+}
+.buddy-input {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 4px 0 14px;
+  border-radius: 22px;
+  background: var(--cell);
+}
+.buddy-input input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  color: var(--label);
+  font: inherit;
+  font-size: 17px;
+  outline: none;
+}
+.buddy-input .text-button {
+  position: relative;
+  color: var(--tint);
+  min-height: 44px;
+  padding: 0 10px;
+}
+.buddy-panel a {
+  color: var(--tint);
+}
+
 /* ---- settings sheet ---------------------------------------------------- */
 .sheet-backdrop {
   position: fixed;
@@ -1201,13 +1281,14 @@ button.cell:active:not(:disabled) {
     grid-row: 2;
   }
   /* No panel open: the trackpad takes the whole width. */
-  .app:not(:has(.media-panel, .keys-panel, .present-panel, .dongle-panel)) .surface {
+  .app:not(:has(.media-panel, .keys-panel, .present-panel, .dongle-panel, .buddy-panel)) .surface {
     grid-column: 1 / -1;
   }
   .media-panel,
   .keys-panel,
   .present-panel,
-  .dongle-panel {
+  .dongle-panel,
+  .buddy-panel {
     grid-column: 2;
     grid-row: 2;
     max-height: none;

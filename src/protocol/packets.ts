@@ -11,6 +11,8 @@ export const CHAR = {
   control: uuid(5),
   status: uuid(6),
 } as const;
+/** Buddy's lines; only on firmware built with CONFIG_NEXUS_BUDDY_PHONE. */
+export const COMPANION = uuid(7);
 
 export const PROTOCOL_VERSION = 1;
 
@@ -97,7 +99,15 @@ export interface Status {
   capsLock: boolean;
   scrollLock: boolean;
   textFree: number;
-  features: { text: boolean; consumer: boolean; hwheel: boolean; dongle: boolean; host: boolean; batteries: boolean };
+  features: {
+    text: boolean;
+    consumer: boolean;
+    hwheel: boolean;
+    dongle: boolean;
+    host: boolean;
+    batteries: boolean;
+    buddy: boolean;
+  };
   /** Output.usb or Output.ble; 0 from firmware without dongle controls. */
   output: number;
   /** The halves' battery, 0-100; null when unknown or not reported. */
@@ -129,6 +139,7 @@ export function decodeStatus(data: DataView): Status {
       dongle: !!(feat & 8),
       host: !!(feat & 16),
       batteries: !!(feat & 32),
+      buddy: !!(feat & 64),
     },
     output: data.byteLength > 6 ? data.getUint8(6) : 0,
     battLeft: percent(data, 7),

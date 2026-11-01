@@ -98,6 +98,21 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
             </div>
           </Section>
 
+          <Section
+            header="Buddy"
+            footer="The Buddy tab chats with the face on NEXUS through Gemini. The key stays on this phone and goes only to Google."
+          >
+            <Row label="Gemini Key">
+              <span className="cell-value">{s.geminiKey ? 'Saved' : 'Not set'}</span>
+            </Row>
+            <ActionRow
+              label="Remove Key"
+              destructive
+              disabled={!s.geminiKey}
+              onClick={() => updateSettings({ geminiKey: '' })}
+            />
+          </Section>
+
           <Section header="Appearance">
             <Row label="Theme">
               <Segmented<Settings['theme']>
