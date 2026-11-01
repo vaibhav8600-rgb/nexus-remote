@@ -9,6 +9,7 @@
 // A paste is one job in that FIFO, fed out as NEXUS reports room for it.
 import {
   CHAR,
+  COMPANION,
   Ctrl,
   KeyAction,
   PROTOCOL_VERSION,
@@ -23,7 +24,7 @@ import {
 import { chunks, sanitize } from '../protocol/text';
 
 type LinkState = 'idle' | 'connecting' | 'connected' | 'reconnecting';
-type CharName = keyof typeof CHAR;
+type CharName = keyof typeof CHAR | 'companion';
 
 interface Op {
   char: CharName;
@@ -141,9 +142,11 @@ export class NexusLink {
         throw new Error('This NEXUS has no Remote Input. Flash firmware built with CONFIG_NEXUS_REMOTE_INPUT=y.');
       });
       step = 'read characteristics';
-      for (const name of Object.keys(CHAR) as CharName[]) {
+      for (const name of Object.keys(CHAR) as (keyof typeof CHAR)[]) {
         this.chars[name] = await service.getCharacteristic(CHAR[name]);
       }
+      // Optional: firmware without Buddy has no Companion.
+      this.chars.companion = await service.getCharacteristic(COMPANION).catch(() => undefined);
       const status = this.chars.status!;
       reached = true;
       // The first encrypted read is what makes the phone pair.
@@ -325,6 +328,13 @@ export class NexusLink {
 
   control(op: number, ...args: number[]): Promise<void> {
     return this.queue('control', encodeControl(op, ...args));
+  }
+
+  /** Lines for Buddy's face, in order with everything else. Works with
+   *  remote mode off: nothing written there can type. */
+  buddy(lines: string): Promise<void> {
+    if (!this.chars.companion) return Promise.reject(new Error('no Buddy on this NEXUS'));
+    return this.queue('companion', new TextEncoder().encode(lines));
   }
 
   // ---- text, paced by the dongle's free queue space ----------------------

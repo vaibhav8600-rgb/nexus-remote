@@ -118,6 +118,15 @@ export const GamepadIcon = () => (
   </Icon>
 );
 
+/** Buddy: a rounded face with two eyes and a smile. */
+export const BuddyIcon = () => (
+  <Icon>
+    <rect x="3.5" y="4.5" width="17" height="15" rx="5" />
+    <path d="M9 10.5v1.5M15 10.5v1.5" strokeWidth={2.4} />
+    <path d="M9.5 15.2c1.4 1.1 3.6 1.1 5 0" />
+  </Icon>
+);
+
 export const HomeIcon = () => (
   <Icon>
     <path d="M4 11.5 12 5l8 6.5" />

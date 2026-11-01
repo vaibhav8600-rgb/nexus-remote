@@ -1,5 +1,6 @@
 // Settings live on the phone, in localStorage. Nothing here is sent anywhere
-// except the typing delay, which the dongle forgets on every reconnect.
+// except the typing delay, which the dongle forgets on every reconnect, and
+// the Gemini key, which goes to Google alone, with each of Buddy's requests.
 import { useSyncExternalStore } from 'react';
 import type { HostOs } from './protocol/hid';
 
@@ -16,6 +17,7 @@ export interface Settings {
   keepAwake: boolean;
   theme: 'auto' | 'light' | 'dark';
   snippets: string[]; // text typed with one tap, from the Keys panel
+  geminiKey: string; // Buddy's brain; '' until the owner pastes one
 }
 
 const DEFAULTS: Settings = {
@@ -31,6 +33,7 @@ const DEFAULTS: Settings = {
   keepAwake: true,
   theme: 'auto',
   snippets: [],
+  geminiKey: '',
 };
 
 const KEY = 'nexus.settings';

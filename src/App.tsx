@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from 'react';
 import { NexusLink, link } from './ble/link';
 import { MouseSender } from './ble/mouse';
-import { ChevronRight, GamepadIcon, KeyboardIcon, MediaIcon, MenuIcon, MonitorIcon, PresentIcon, WindowIcon } from './icons';
+import { BuddyIcon, ChevronRight, GamepadIcon, KeyboardIcon, MediaIcon, MenuIcon, MonitorIcon, PresentIcon, WindowIcon } from './icons';
 import { NO_MODS, consumeMods, tapMod, type ModState } from './protocol/mods';
 import { Ctrl, Page } from './protocol/packets';
+import { BuddyPanel } from './screens/BuddyPanel';
 import { DonglePanel } from './screens/DonglePanel';
 import { KeyStrip, LiveInput } from './screens/KeyboardBar';
 import { KeysPanel } from './screens/KeysPanel';
@@ -14,7 +15,7 @@ import { Trackpad } from './screens/Trackpad';
 import { haptic, useSettings } from './settings';
 import { Tick } from './ui';
 
-type Panel = 'none' | 'keyboard' | 'media' | 'keys' | 'present' | 'dongle';
+type Panel = 'none' | 'keyboard' | 'media' | 'keys' | 'present' | 'dongle' | 'buddy';
 
 export interface Ctx {
   mouse: MouseSender;
@@ -209,6 +210,7 @@ export function App() {
       {panel === 'keyboard' && <KeyStrip ctx={ctx} />}
       {panel === 'present' && <PresentPanel ctx={ctx} />}
       {panel === 'dongle' && <DonglePanel />}
+      {panel === 'buddy' && <BuddyPanel />}
 
       <nav className="toolbar">
         {tool('settings', 'Settings', <MenuIcon />)}
@@ -217,6 +219,7 @@ export function App() {
         {tool('keys', 'Shortcuts and keys', <WindowIcon />)}
         {tool('present', 'Presentation', <PresentIcon />)}
         {tool('dongle', 'NEXUS controls', <GamepadIcon />)}
+        {tool('buddy', 'Buddy', <BuddyIcon />)}
         {tool('keyboard', 'Keyboard', <KeyboardIcon />)}
         <LiveInput
           ref={input}
