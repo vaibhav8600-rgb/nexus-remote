@@ -71,6 +71,17 @@ export function BuddyPanel() {
   const pressedAt = useRef(0);
   const cap = useRef<ReturnType<typeof setTimeout>>(undefined);
 
+  // Leaving the tab while listening turns the mic off and throws the clip
+  // away: nothing is recorded or sent once the panel is gone.
+  useEffect(() => {
+    const m = mic.current;
+    return () => {
+      clearTimeout(cap.current);
+      held.current = latched.current = false;
+      void m.stop();
+    };
+  }, []);
+
   const talk = async () => {
     if (latched.current) {
       // The second tap. While the mic is still opening (a permission
