@@ -108,6 +108,31 @@ export const faceLines = (a: Answer) => `E ${a.emotion.toUpperCase()}\nS ${a.lin
 
 export const BUDDY_NAME = persona.name;
 
+export interface Command {
+  reply: string;
+  steps: string[][]; // host-link lines, a step about two seconds apart
+}
+
+/** A face ("show me a sad face", "smile") or a trick ("high five") with only
+ *  filler words around it, acted out from persona.json without Gemini. Null
+ *  for a real conversation: "why are you sad" says more than a face. */
+export function command(text: string, p = persona): Command | null {
+  const t = ` ${text.toLowerCase().replace(/[^a-z0-9' ]/g, ' ').replace(/\s+/g, ' ').trim()} `;
+  const filler = new Set([...p.commands.filler, p.name.toLowerCase()]);
+  const only = (w: string) =>
+    t.includes(` ${w} `) &&
+    t
+      .replace(` ${w} `, ' ')
+      .trim()
+      .split(' ')
+      .every((x) => !x || filler.has(x));
+  for (const a of p.commands.actions) if (a.words.some(only)) return { reply: a.reply, steps: a.steps };
+  for (const f of p.commands.faces)
+    if (f.words.some(only))
+      return { reply: `(${p.name} makes a ${f.emotion} face)`, steps: [[`E ${f.emotion.toUpperCase()}`, `S ${f.line}`]] };
+  return null;
+}
+
 /** Ask Gemini. Throws an Error whose message is fit to show. */
 export async function ask(key: string, history: Turn[], said: string): Promise<Answer> {
   let res: Response;

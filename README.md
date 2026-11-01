@@ -29,7 +29,9 @@ above it - so autocorrect, swipe typing and dictation all work.
   [Google AI Studio](https://aistudio.google.com/apikey). The key is kept on
   the phone and sent only to Google. The dongle shows the matching face, a
   short line and its sound. Buddy remembers the last six exchanges while
-  the app is open. The face needs NEXUS firmware with
+  the app is open. Faces and tricks - "show me a sad face", "smile",
+  "high five", "sing a song", "dance" - are acted out at once without
+  Gemini. Tap the keyboard's microphone to talk instead of typing. The face needs NEXUS firmware with
   `CONFIG_NEXUS_BUDDY_PHONE`; without it the chat still works on the phone.
 - **Landscape**: the open panel sits beside the trackpad instead of under it.
 - **Haptics** on Android, and on iPhone (iOS 18+) from the tap itself.

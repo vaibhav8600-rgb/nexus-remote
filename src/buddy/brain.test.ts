@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { decodeStatus } from '../protocol/packets';
-import { clockLines, faceLines, fold, parseReply, remember, requestBody, systemPrompt, type Turn } from './brain';
+import { clockLines, command, faceLines, fold, parseReply, remember, requestBody, systemPrompt, type Turn } from './brain';
 import persona from './persona.json';
 
 const gemini = (obj: unknown) => ({ candidates: [{ content: { parts: [{ text: JSON.stringify(obj) }] } }] });
@@ -49,6 +49,27 @@ describe('Buddy brain', () => {
   it('speaks the host link protocol', () => {
     expect(faceLines({ emotion: 'sad', line: 'OH NO', reply: '' })).toBe('E SAD\nS OH NO\n');
     expect(clockLines(new Date(2026, 10, 1, 19, 5, 30))).toBe(`T ${19 * 3600 + 5 * 60 + 30}\nD 20758\n`);
+  });
+
+  it('acts out faces and tricks without Gemini, and only those', () => {
+    expect(command('show me sad face')?.steps).toEqual([['E SAD', 'S SNIFF... SO SAD.']]);
+    expect(command('Smile!')?.steps[0][0]).toBe('E HAPPY');
+    expect(command('hey niku, give me a high five')?.steps).toHaveLength(3);
+    expect(command('sing a song')?.steps[0][0]).toBe('E LISTENING');
+    for (const t of ['why are you sad?', 'sing a song about cats', 'who is president of india', 'hi', 'are you happy'])
+      expect(command(t)).toBeNull();
+  });
+
+  it('has only lines the dongle takes in every command', () => {
+    const lines = [
+      ...persona.commands.actions.flatMap((a) => a.steps.flat()),
+      ...persona.commands.faces.map((f) => `S ${f.line}`),
+    ];
+    for (const l of lines) {
+      if (l.startsWith('S ')) expect(fold(l.slice(2)), l).toBe(l.slice(2));
+      else if (l.startsWith('E ')) expect(persona.emotions).toContain(l.slice(2).toLowerCase());
+      else expect(l, l).toMatch(/^L -?\d{1,2},-?\d{1,2}$/);
+    }
   });
 
   it('reads the Companion bit from Status', () => {
