@@ -118,6 +118,13 @@ export const GamepadIcon = () => (
   </Icon>
 );
 
+export const MicIcon = () => (
+  <Icon>
+    <rect x="9" y="3" width="6" height="11" rx="3" />
+    <path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21" />
+  </Icon>
+);
+
 /** Buddy: a rounded face with two eyes and a smile. */
 export const BuddyIcon = () => (
   <Icon>

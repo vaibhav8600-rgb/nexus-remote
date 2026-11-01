@@ -31,7 +31,9 @@ above it - so autocorrect, swipe typing and dictation all work.
   short line and its sound. Buddy remembers the last six exchanges while
   the app is open. Faces and tricks - "show me a sad face", "smile",
   "high five", "sing a song", "dance" - are acted out at once without
-  Gemini. Tap the keyboard's microphone to talk instead of typing. The face needs NEXUS firmware with
+  Gemini. **Push to talk**: hold the microphone in the message bar and
+  speak. The dongle shows its listening face, and when you let go Gemini
+  writes down what you said and it is sent like a typed message. The face needs NEXUS firmware with
   `CONFIG_NEXUS_BUDDY_PHONE`; without it the chat still works on the phone.
 - **Landscape**: the open panel sits beside the trackpad instead of under it.
 - **Haptics** on Android, and on iPhone (iOS 18+) from the tap itself.
