@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { link } from '../ble/link';
-import { BUDDY_NAME, ask, clockLines, faceLines, remember, type Turn } from '../buddy/brain';
+import { BUDDY_NAME, ask, clockLines, command, faceLines, remember, type Turn } from '../buddy/brain';
 import { haptic, updateSettings, useSettings } from '../settings';
 import { Tick } from '../ui';
 
@@ -14,6 +14,20 @@ interface Msg {
 // coming back should not make Buddy forget. Gone when the app is.
 let turns: Turn[] = [];
 let log: Msg[] = [];
+let trick: ReturnType<typeof setTimeout> | undefined;
+
+/** A trick's steps to the dongle, about two seconds apart. A new one cuts
+ *  off any still playing. */
+function play(steps: string[][]) {
+  clearTimeout(trick);
+  const next = (i: number) => {
+    if (i >= steps.length || !faceUp()) return;
+    const lines = (i === 0 ? ['B 1', ...steps[i]] : steps[i]).join('\n');
+    void link.buddy(`${lines}\n`).catch(() => undefined);
+    trick = setTimeout(() => next(i + 1), 1800);
+  };
+  next(0);
+}
 
 /** Whether this NEXUS can show Buddy's side of it. */
 const faceUp = () => link.state === 'connected' && !!link.status?.features.buddy;
@@ -44,6 +58,14 @@ export function BuddyPanel() {
     haptic();
     setDraft('');
     add({ from: 'you', text: said });
+    // A face or a trick: acted out at once, no Gemini.
+    const c = command(said);
+    if (c) {
+      const first = c.steps[0].find((l) => l.startsWith('E '));
+      add({ from: 'buddy', text: c.reply, emotion: first ? first.slice(2).toLowerCase() : 'happy' });
+      play(c.steps);
+      return;
+    }
     setBusy(true);
     // B 1 takes the face for the phone; the clock rides along for quiet hours.
     if (faceUp()) void link.buddy(`B 1\n${clockLines()}E THINKING\n`).catch(() => undefined);
