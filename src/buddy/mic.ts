@@ -55,12 +55,18 @@ export class Mic {
     // The context first, inside the tap: iOS only starts audio from a gesture.
     // ponytail: ScriptProcessorNode is deprecated but runs everywhere; an
     // AudioWorklet needs a module file and buys nothing for a few seconds.
-    this.ctx = new AudioContext();
+    const ctx = (this.ctx = new AudioContext());
     this.chunks = [];
-    this.stream = await navigator.mediaDevices.getUserMedia({
+    const stream = await navigator.mediaDevices.getUserMedia({
       audio: { echoCancellation: true, noiseSuppression: true, channelCount: 1 },
     });
-    const src = this.ctx.createMediaStreamSource(this.stream);
+    // stop() came while the permission prompt was up: never leave it on.
+    if (this.ctx !== ctx) {
+      stream.getTracks().forEach((t) => t.stop());
+      throw new Error('stopped while opening');
+    }
+    this.stream = stream;
+    const src = ctx.createMediaStreamSource(stream);
     this.node = this.ctx.createScriptProcessor(4096, 1, 1);
     this.node.onaudioprocess = (e) => this.chunks.push(new Float32Array(e.inputBuffer.getChannelData(0)));
     src.connect(this.node);
