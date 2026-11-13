@@ -27,6 +27,8 @@ describe('push-to-talk audio', () => {
   it('base64-encodes a clip too big for one String.fromCharCode', () => {
     const big = new Uint8Array(200000).map((_, i) => i & 0xff);
     const back = Uint8Array.from(atob(base64(big)), (c) => c.charCodeAt(0));
-    expect(back).toEqual(big);
+    // Not toEqual: its deep comparison of 200,000 elements takes seconds.
+    expect(back.length).toBe(big.length);
+    expect(back.every((v, i) => v === big[i])).toBe(true);
   });
 });

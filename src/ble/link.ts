@@ -57,6 +57,7 @@ export class NexusLink {
   private device?: BluetoothDevice;
   private chars: Partial<Record<CharName, BluetoothRemoteGATTCharacteristic>> = {};
   private jobs: (Op | TextJob)[] = [];
+  private ctl: Op[] = []; // Control writes: after the mouse, ahead of keys and text
   private mouse: MousePending[] = [];
   private pumping = false;
   private listeners = new Set<() => void>();
@@ -183,7 +184,11 @@ export class NexusLink {
     } catch (e) {
       this.chars = {};
       if (this.state === 'reconnecting' && !reached) throw e;
-      this.set('idle', quiet ? '' : `${message(e)} (${step}: ${detail(e)})`);
+      // Never idle with the radio still connected: NEXUS would go on
+      // serving a phone whose app says it is not there.
+      device.gatt.disconnect();
+      // Disconnect tapped while this was still connecting is not an error.
+      this.set('idle', quiet || this.userClosed ? '' : `${message(e)} (${step}: ${detail(e)})`);
     }
   }
 
@@ -201,8 +206,19 @@ export class NexusLink {
   private onDrop = () => {
     this.chars = {};
     this.mouse = [];
+    // What NEXUS last said is about a link that is gone: a "typing" left
+    // set would keep the Typing bar up for as long as the app stayed open.
+    this.status = null;
     // Text does not survive a drop - the dongle dropped its half of it too.
     for (const j of this.jobs.splice(0)) if (!('text' in j)) j.reject(new Error('disconnected'));
+    for (const j of this.ctl.splice(0)) j.reject(new Error('disconnected'));
+    // Only a link that was up reconnects. While connecting, open() reports
+    // the failure itself; while reconnecting, retry() is already at it and
+    // a second loop would race the first; idle has nothing to recover.
+    if (this.state !== 'connected') {
+      this.emit();
+      return;
+    }
     if (this.userClosed) {
       this.set('idle', this.error); // keep a message that explains why
       return;
@@ -257,7 +273,9 @@ export class NexusLink {
       // Nothing waits for a link that is not there: a key or a keepalive
       // queued during a drop would all go out at once on reconnect.
       if (this.state !== 'connected') return reject(new Error('not connected'));
-      this.jobs.push({ char, data, resolve, reject });
+      // Control is its own lane: a held D-pad's keepalive stuck behind a
+      // paste would let the dongle's one-second watchdog release it.
+      (char === 'control' ? this.ctl : this.jobs).push({ char, data, resolve, reject });
       this.pump();
     });
   }
@@ -272,6 +290,11 @@ export class NexusLink {
           await this.chars
             .mouse!.writeValueWithoutResponse(encodeMouse(m.buttons, m.dx, m.dy, m.wheel, m.hwheel))
             .catch(() => undefined);
+          continue;
+        }
+        const c = this.ctl.shift();
+        if (c) {
+          await this.chars.control!.writeValueWithResponse(c.data).then(c.resolve, c.reject);
           continue;
         }
         const job = this.jobs[0];
