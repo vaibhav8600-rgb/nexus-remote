@@ -16,6 +16,7 @@ interface Msg {
 // coming back should not make Buddy forget. Gone when the app is.
 let turns: Turn[] = [];
 let log: Msg[] = [];
+let asking = false; // a request is out: reopening the tab must not allow a second
 let trick: ReturnType<typeof setTimeout> | undefined;
 
 /** Shorter than this is a tap (listen until the next tap), longer a hold. */
@@ -45,7 +46,11 @@ export function BuddyPanel() {
   const [msgs, setMsgs] = useState(log);
   const [draft, setDraft] = useState('');
   const [keyDraft, setKeyDraft] = useState('');
-  const [busy, setBusy] = useState(false);
+  const [busy, setBusyState] = useState(asking);
+  const setBusy = (b: boolean) => {
+    asking = b;
+    setBusyState(b);
+  };
   const end = useRef<HTMLDivElement>(null);
 
   // A block, not an arrow's value: newer Chrome returns a Promise from
@@ -97,13 +102,22 @@ export function BuddyPanel() {
     pressedAt.current = Date.now();
     setListening(true);
     if (faceUp()) void link.buddy('B 1\nE LISTENING\n').catch(() => undefined);
+    let recording = false;
+    let refused = false;
     try {
-      await mic.current.start();
+      recording = await mic.current.start();
     } catch {
+      refused = true;
+    }
+    if (!recording) {
+      // Refused, or stopped while it was opening (the tab closed): only the
+      // first is something to tell the user.
       held.current = latched.current = starting.current = false;
       setListening(false);
       setTapped(false);
-      add({ from: 'note', text: 'The microphone was not allowed. Use the keyboard’s microphone instead.' });
+      if (refused) {
+        add({ from: 'note', text: 'The microphone was not allowed. Use the keyboard’s microphone instead.' });
+      }
       return;
     }
     starting.current = false;

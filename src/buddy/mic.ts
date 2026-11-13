@@ -51,35 +51,52 @@ export class Mic {
     return typeof navigator !== 'undefined' && !!navigator.mediaDevices?.getUserMedia;
   }
 
-  async start() {
+  /** @return whether it is recording: false if stop() came while it was
+   *  still opening. Throws if the microphone was refused. */
+  async start(): Promise<boolean> {
     // The context first, inside the tap: iOS only starts audio from a gesture.
     // ponytail: ScriptProcessorNode is deprecated but runs everywhere; an
     // AudioWorklet needs a module file and buys nothing for a few seconds.
     const ctx = (this.ctx = new AudioContext());
     this.chunks = [];
-    const stream = await navigator.mediaDevices.getUserMedia({
-      audio: { echoCancellation: true, noiseSuppression: true, channelCount: 1 },
-    });
+    let stream: MediaStream;
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({
+        audio: { echoCancellation: true, noiseSuppression: true, channelCount: 1 },
+      });
+    } catch (e) {
+      // Refused: close the context too - a page may only hold a few.
+      if (this.ctx === ctx) this.ctx = undefined;
+      void ctx.close().catch(() => undefined);
+      throw e;
+    }
     // stop() came while the permission prompt was up: never leave it on.
     if (this.ctx !== ctx) {
       stream.getTracks().forEach((t) => t.stop());
-      throw new Error('stopped while opening');
+      return false;
     }
     this.stream = stream;
     const src = ctx.createMediaStreamSource(stream);
-    this.node = this.ctx.createScriptProcessor(4096, 1, 1);
+    this.node = ctx.createScriptProcessor(4096, 1, 1);
     this.node.onaudioprocess = (e) => this.chunks.push(new Float32Array(e.inputBuffer.getChannelData(0)));
     src.connect(this.node);
-    this.node.connect(this.ctx.destination); // silent, but needed for it to run
+    this.node.connect(ctx.destination); // silent, but needed for it to run
+    return true;
   }
 
   /** The clip as WAV, or null for a tap too short to be speech. */
   async stop(): Promise<Uint8Array<ArrayBuffer> | null> {
-    const rate = this.ctx?.sampleRate ?? 48000;
-    this.node?.disconnect();
-    this.stream?.getTracks().forEach((t) => t.stop());
-    await this.ctx?.close().catch(() => undefined);
+    // Cleared before anything is awaited: a start() still opening checks it
+    // the moment its permission prompt resolves, which can be before the
+    // context has finished closing.
+    const ctx = this.ctx;
     this.ctx = undefined;
+    const rate = ctx?.sampleRate ?? 48000;
+    this.node?.disconnect();
+    this.node = undefined;
+    this.stream?.getTracks().forEach((t) => t.stop());
+    this.stream = undefined;
+    await ctx?.close().catch(() => undefined);
     const pcm = new Float32Array(this.chunks.reduce((n, c) => n + c.length, 0));
     let at = 0;
     for (const c of this.chunks) {

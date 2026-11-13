@@ -56,6 +56,9 @@ function Hold(props: { act: number; label: string; className: string; disabled: 
       onPointerDown={() => {
         // No setPointerCapture: a touch is captured to what it landed on
         // anyway, and that has to stay the Tick for iOS to play its haptic.
+        // Already down - a second finger: its interval would never be
+        // cleared, and keepalives forever defeat NEXUS's stuck-key watchdog.
+        if (held.current) return;
         haptic();
         held.current = true;
         setDown(true);
