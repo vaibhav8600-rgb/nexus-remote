@@ -863,6 +863,51 @@ button.cell:active:not(:disabled) {
 .buddy-panel a {
   color: var(--tint);
 }
+/* Talk: a capsule button, filled like iOS's prominent style; red to end. */
+.buddy-talk-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.buddy-talk {
+  position: relative;
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 18px;
+  border: 0;
+  border-radius: 22px;
+  background: var(--tint);
+  color: var(--tint-on);
+  font: inherit;
+  font-size: 17px;
+  font-weight: 600;
+}
+.buddy-talk svg {
+  font-size: 20px;
+}
+.buddy-talk.on {
+  background: var(--red);
+  color: #fff;
+}
+.buddy-talk.on svg {
+  animation: pulse 1s ease-in-out infinite;
+}
+.buddy-talk:disabled {
+  opacity: 0.4;
+}
+@media (prefers-reduced-motion: reduce) {
+  .buddy-talk.on svg {
+    animation: none;
+  }
+}
+.buddy-talk-state {
+  min-width: 0;
+  font-size: 13px;
+  color: var(--secondary);
+}
 
 /* ---- settings sheet ---------------------------------------------------- */
 .sheet-backdrop {

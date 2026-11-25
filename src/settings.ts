@@ -2,6 +2,7 @@
 // except the typing delay, which the dongle forgets on every reconnect, and
 // the Gemini key, which goes to Google alone, with each of Buddy's requests.
 import { useSyncExternalStore } from 'react';
+import { LIVE_MODEL } from './buddy/live';
 import type { HostOs } from './protocol/hid';
 
 export interface Settings {
@@ -18,6 +19,7 @@ export interface Settings {
   theme: 'auto' | 'light' | 'dark';
   snippets: string[]; // text typed with one tap, from the Keys panel
   geminiKey: string; // Buddy's brain; '' until the owner pastes one
+  liveModel: string; // what Talk speaks with (buddy/live.ts)
 }
 
 const DEFAULTS: Settings = {
@@ -34,6 +36,7 @@ const DEFAULTS: Settings = {
   theme: 'auto',
   snippets: [],
   geminiKey: '',
+  liveModel: LIVE_MODEL,
 };
 
 const KEY = 'nexus.settings';

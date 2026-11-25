@@ -125,6 +125,13 @@ export const MicIcon = () => (
   </Icon>
 );
 
+/** Talk: a waveform, as in a live voice conversation. */
+export const WaveformIcon = () => (
+  <Icon>
+    <path d="M4 10v4M8 7v10M12 4v16M16 8v8M20 10.5v3" />
+  </Icon>
+);
+
 /** Buddy: a rounded face with two eyes and a smile. */
 export const BuddyIcon = () => (
   <Icon>
