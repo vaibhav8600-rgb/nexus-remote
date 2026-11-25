@@ -201,6 +201,14 @@ export class LiveTalk {
     this.timer = setInterval(() => this.tick(), MOUTH_TICK_MS);
   }
 
+  /** Something typed, into the same conversation: answered out loud. False
+   *  when not connected yet (or any more). */
+  say(text: string): boolean {
+    if (!this.ready || this.ws?.readyState !== WebSocket.OPEN || !text) return false;
+    this.ws.send(JSON.stringify({ realtimeInput: { text } }));
+    return true;
+  }
+
   /** You ended it. */
   stop() {
     this.end(null);
