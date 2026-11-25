@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import { link } from '../ble/link';
 import { BUDDY_NAME, ask, clockLines, command, faceLines, remember, transcribe, type Turn } from '../buddy/brain';
+import { LIVE_FALLBACK, LiveTalk, isQuota, type LiveState } from '../buddy/live';
 import { Mic } from '../buddy/mic';
-import { MicIcon } from '../icons';
-import { haptic, updateSettings, useSettings } from '../settings';
+import { MicIcon, WaveformIcon } from '../icons';
+import { IOS, haptic, updateSettings, useSettings } from '../settings';
 import { Tick } from '../ui';
 
 interface Msg {
@@ -163,6 +164,50 @@ export function BuddyPanel() {
     }
   };
 
+  // Talk: a live spoken conversation (buddy/live.ts). Tap to start, tap to
+  // end. Leaving the tab or the app ends it too: nothing listens once the
+  // panel is gone.
+  const [live, setLive] = useState<LiveState | 'off'>('off');
+  const talkRef = useRef<LiveTalk>(undefined);
+  useEffect(() => {
+    const hidden = () => document.visibilityState === 'hidden' && talkRef.current?.stop();
+    document.addEventListener('visibilitychange', hidden);
+    return () => {
+      document.removeEventListener('visibilitychange', hidden);
+      talkRef.current?.stop();
+    };
+  }, []);
+
+  const toggleTalk = () => {
+    haptic();
+    if (talkRef.current) {
+      talkRef.current.stop();
+      return;
+    }
+    const t = new LiveTalk(
+      (lines) => {
+        if (faceUp()) void link.buddy(lines).catch(() => undefined);
+      },
+      {
+        state: setLive,
+        turn: (you, said, emotion) => {
+          if (you) add({ from: 'you', text: you });
+          if (said) add({ from: 'buddy', text: said, emotion });
+        },
+        end: (why) => {
+          if (talkRef.current === t) talkRef.current = undefined;
+          setLive('off');
+          if (!why) return;
+          add({ from: 'note', text: why });
+          if (isQuota(why) && s.liveModel !== LIVE_FALLBACK)
+            add({ from: 'note', text: 'Out of voice quota. Settings → Buddy → Voice Model → 2.5 Flash has much more.' });
+        },
+      },
+    );
+    talkRef.current = t;
+    void t.start(s.geminiKey, s.liveModel);
+  };
+
   const send = async (text = draft) => {
     const said = text.trim();
     if (!said) return;
@@ -245,13 +290,36 @@ export function BuddyPanel() {
         {busy && <div className="bubble buddy thinking">…</div>}
         <div ref={end} />
       </div>
+      {Mic.supported() && typeof WebSocket !== 'undefined' && (
+        <div className="buddy-talk-row">
+          <button
+            className={`buddy-talk${live !== 'off' ? ' on' : ''}`}
+            aria-pressed={live !== 'off'}
+            disabled={listening || busy}
+            onClick={toggleTalk}
+          >
+            <Tick />
+            <WaveformIcon />
+            {live === 'off' ? 'Talk' : 'End'}
+          </button>
+          <span className="buddy-talk-state" aria-live="polite">
+            {live === 'off'
+              ? `A live conversation, out loud.${IOS ? ' Silent switch off to hear it.' : ''}`
+              : live === 'connecting'
+                ? 'Connecting…'
+                : live === 'speaking'
+                  ? `${BUDDY_NAME} is talking. Speak to cut in.`
+                  : 'Listening…'}
+          </span>
+        </div>
+      )}
       <div className="buddy-input">
         {Mic.supported() && (
           <button
             className={`buddy-mic${listening ? ' on' : ''}`}
             aria-label={tapped ? 'Tap to send' : 'Tap or hold to talk'}
             aria-pressed={listening}
-            disabled={busy}
+            disabled={busy || live !== 'off'}
             onPointerDown={(e) => {
               e.preventDefault(); // no focus, no text selection on a long press
               void talk();

@@ -27,16 +27,23 @@ export const fold = (text: string) =>
     .join('')
     .slice(0, LINE_MAX);
 
-export function systemPrompt(p: Persona = persona): string {
+/** Gemini's instructions. @p spoken is for Gemini Live, which talks rather
+ *  than writing lines, and sets the face with set_face instead of a JSON field. */
+export function systemPrompt(p: Persona = persona, spoken = false): string {
   const v = p.voice;
+  const owner = p.owner || 'the owner';
   return [
-    `You are ${p.name}, a tiny animated face on ${p.owner || 'the owner'}'s keyboard dongle. Pronoun: ${p.pronoun}.`,
+    `You are ${p.name}, a tiny animated face on ${owner}'s keyboard dongle. Pronoun: ${p.pronoun}.`,
     'Traits:',
     ...p.traits.map((t) => `- ${t}`),
-    `Voice: ${v.style}. A line is at most ${v.max_chars} characters, ${v.case} case, ${v.charset}.`,
+    spoken
+      ? `Voice: ${v.style}. You are talking out loud with ${owner}: answer in one or two short sentences.`
+      : `Voice: ${v.style}. A line is at most ${v.max_chars} characters, ${v.case} case, ${v.charset}.`,
     'Never:',
     ...p.never.map((n) => `- ${n}`),
-    'Reply only as JSON matching the schema: "emotion" is how the face looks, "line" goes on the dongle, "reply" is what you say on a screen - when the owner talks to you, a real answer in normal sentence case, at most 200 characters.',
+    spoken
+      ? 'Call set_face at the start of every reply with the face that fits it, then speak.'
+      : 'Reply only as JSON matching the schema: "emotion" is how the face looks, "line" goes on the dongle, "reply" is what you say on a screen - when the owner talks to you, a real answer in normal sentence case, at most 200 characters.',
   ].join('\n');
 }
 

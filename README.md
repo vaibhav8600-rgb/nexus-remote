@@ -36,6 +36,20 @@ above it - so autocorrect, swipe typing and dictation all work.
   listening face meanwhile, then Gemini writes down what you said and it is
   sent like a typed message. Listening stops by itself after 30 seconds. The face needs NEXUS firmware with
   `CONFIG_NEXUS_BUDDY_PHONE`; without it the chat still works on the phone.
+- **Talk out loud with Buddy**: tap **Talk** in the Buddy tab for a live spoken
+  conversation through Gemini Live, and tap **End** to stop. Buddy answers in a
+  real voice through the phone speaker. The dongle shows the listening face
+  while you speak, then the emotion Gemini picks, and the mouth moves with the
+  speech. The phone's echo cancellation keeps the mic open, so you can cut in
+  mid-sentence. The transcript appears in the chat. The audio goes from the
+  phone straight to Google. A browser cannot put the key in a WebSocket
+  header, so it goes in the URL, over TLS. It ends when you leave the tab or the
+  app, and Gemini ends a session after about 15 minutes; tap Talk again. It
+  uses `gemini-3.8-live`. If that runs out of quota, **Settings → Buddy → Voice
+  Model → 2.5 Flash** has far more, and the app suggests it. Without a dongle
+  it is voice only. On iPhone, the silent switch can mute web audio. The app
+  asks for a session that records and plays, which is not muted, where
+  the browser supports that. If you hear nothing, turn the silent switch off.
 - **Landscape**: the open panel sits beside the trackpad instead of under it.
 - **Haptics** on Android, and on iPhone (iOS 18+) from the tap itself.
 

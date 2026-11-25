@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { link } from '../ble/link';
+import { LIVE_FALLBACK, LIVE_MODEL } from '../buddy/live';
 import type { HostOs } from '../protocol/hid';
 import { Ctrl } from '../protocol/packets';
 import { haptic, hapticMethod, updateSettings, useSettings, type Settings } from '../settings';
@@ -100,10 +101,21 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
 
           <Section
             header="Buddy"
-            footer="The Buddy tab chats with the face on NEXUS through Gemini. The key stays on this phone and goes only to Google."
+            footer="The Buddy tab chats with the face on NEXUS through Gemini. The key stays on this phone and goes only to Google. Talk uses the voice model; 2.5 Flash has far more free quota."
           >
             <Row label="Gemini Key">
               <span className="cell-value">{s.geminiKey ? 'Saved' : 'Not set'}</span>
+            </Row>
+            <Row label="Voice Model">
+              <Segmented<string>
+                label="Voice Model"
+                value={s.liveModel}
+                options={[
+                  [LIVE_MODEL, '3.8 Live'],
+                  [LIVE_FALLBACK, '2.5 Flash'],
+                ]}
+                onChange={(liveModel) => updateSettings({ liveModel })}
+              />
             </Row>
             <ActionRow
               label="Remove Key"
