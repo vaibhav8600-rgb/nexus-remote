@@ -41,7 +41,9 @@ above it - so autocorrect, swipe typing and dictation all work.
   real voice through the phone speaker. The dongle shows the listening face
   while you speak, then the emotion Gemini picks, and the mouth moves with the
   speech. The phone's echo cancellation keeps the mic open, so you can cut in
-  mid-sentence. The transcript appears in the chat. The audio goes from the
+  mid-sentence. The transcript appears in the chat. A message typed while
+  talking joins the conversation and is answered out loud; end the talk for a
+  written answer instead. The voice is soft and calm (`Achernar`). The audio goes from the
   phone straight to Google. A browser cannot put the key in a WebSocket
   header, so it goes in the URL, over TLS. It ends when you leave the tab or the
   app, and Gemini ends a session after about 15 minutes; tap Talk again. It

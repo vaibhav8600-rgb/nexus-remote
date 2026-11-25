@@ -214,6 +214,13 @@ export function BuddyPanel() {
     haptic();
     if (text === draft) setDraft('');
     add({ from: 'you', text: said });
+    // Talking: into the spoken conversation, answered out loud in the same
+    // context, faces and tricks included (Gemini picks the face).
+    if (talkRef.current) {
+      if (!talkRef.current.say(said.slice(0, 500)))
+        add({ from: 'note', text: 'Still connecting - send it again in a moment.' });
+      return;
+    }
     // A face or a trick: acted out at once, no Gemini.
     const c = command(said);
     if (c) {
@@ -335,7 +342,15 @@ export function BuddyPanel() {
         )}
         <input
           enterKeyHint="send"
-          placeholder={tapped ? 'Listening… tap the mic to send' : listening ? 'Listening… let go to send' : `Message ${BUDDY_NAME}`}
+          placeholder={
+            tapped
+              ? 'Listening… tap the mic to send'
+              : listening
+                ? 'Listening… let go to send'
+                : live !== 'off'
+                  ? `Type to ${BUDDY_NAME}, answered out loud`
+                  : `Message ${BUDDY_NAME}`
+          }
           aria-label={`Message ${BUDDY_NAME}`}
           maxLength={500}
           value={draft}
