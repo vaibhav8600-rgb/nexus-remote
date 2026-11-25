@@ -33,7 +33,7 @@ describe('Talk: live voice', () => {
     const m = setupMessage();
     expect(m.setup.model).toBe(`models/${LIVE_MODEL}`);
     expect(m.setup.generationConfig.responseModalities).toEqual(['AUDIO']);
-    expect(m.setup.generationConfig.speechConfig.voiceConfig.prebuiltVoiceConfig.voiceName).toBe('Puck');
+    expect(m.setup.generationConfig.speechConfig.voiceConfig.prebuiltVoiceConfig.voiceName).toBe('Achernar');
     const fn = m.setup.tools[0].functionDeclarations[0];
     expect(fn.name).toBe('set_face');
     expect(fn.behavior).toBe('BLOCKING');
@@ -45,6 +45,8 @@ describe('Talk: live voice', () => {
     expect(text).toBe(systemPrompt(persona, true));
     expect(text).toContain('set_face');
     expect(text).not.toContain('JSON');
+    expect(text).toContain(persona.voice.spoken);
+    expect(text).toContain('Pronoun: she');
     for (const t of persona.traits) expect(text).toContain(t);
     expect(setupMessage('other-model', 'Kore').setup.model).toBe('models/other-model');
   });

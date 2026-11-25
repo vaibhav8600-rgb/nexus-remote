@@ -37,7 +37,7 @@ export function systemPrompt(p: Persona = persona, spoken = false): string {
     'Traits:',
     ...p.traits.map((t) => `- ${t}`),
     spoken
-      ? `Voice: ${v.style}. You are talking out loud with ${owner}: answer in one or two short sentences.`
+      ? `Voice: ${v.spoken}. You are talking out loud with ${owner}: answer in one or two short sentences.`
       : `Voice: ${v.style}. A line is at most ${v.max_chars} characters, ${v.case} case, ${v.charset}.`,
     'Never:',
     ...p.never.map((n) => `- ${n}`),

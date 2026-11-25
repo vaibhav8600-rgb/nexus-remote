@@ -12,7 +12,8 @@ import persona from './persona.json';
 export const LIVE_MODEL = 'gemini-3.8-live';
 /** Far more free-tier quota than LIVE_MODEL; Settings → Buddy switches to it. */
 export const LIVE_FALLBACK = 'gemini-2.5-flash-native-audio-preview-12-2025';
-export const LIVE_VOICE = 'Puck';
+/** Soft and calm. Other gentle ones: Vindemiatrix, Sulafat, Despina, Aoede. */
+export const LIVE_VOICE = 'Achernar';
 // Browsers cannot set a WebSocket's headers, so the key rides in the query
 // string - over TLS, from the phone straight to Google. Never logged.
 const LIVE_URL =
