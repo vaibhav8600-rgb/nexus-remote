@@ -11,6 +11,8 @@ interface Msg {
   from: 'you' | 'buddy' | 'note';
   text: string;
   emotion?: string;
+  /** A photo Buddy was shown (a data: URL): what it saw is what you see. */
+  image?: string;
 }
 
 // The conversation outlives the panel: closing it to move the pointer and
@@ -216,7 +218,7 @@ export function BuddyPanel() {
           t.holdFaces(c.steps.length * 1800 + 2500);
           play(c.steps);
         },
-        note: (text) => add({ from: 'note', text }),
+        note: (text, image) => add({ from: 'note', text, image }),
         turn: (you, said, emotion) => {
           if (you) add({ from: 'you', text: you });
           if (said) add({ from: 'buddy', text: said, emotion });
@@ -370,6 +372,7 @@ export function BuddyPanel() {
               </span>
             )}
             {m.text}
+            {m.image && <img className="bubble-photo" src={m.image} alt="What Buddy saw" />}
           </div>
         ))}
         {busy && <div className="bubble buddy thinking">…</div>}

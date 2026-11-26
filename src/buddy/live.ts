@@ -268,8 +268,8 @@ export interface LiveEvents {
   heard?(you: string): void;
   /** One exchange, when Buddy has finished (or was cut off). */
   turn(you: string, buddy: string, emotion: string): void;
-  /** A note fit to show: a photo shared, a fact remembered. */
-  note?(text: string): void;
+  /** A note fit to show - with the photo itself when one was shared. */
+  note?(text: string, image?: string): void;
   /** The session is over: why (null when you ended it), what kind of end -
    *  undefined on purpose - and 3.8's resumption handle, if it gave one. */
   end(why: string | null, kind?: EndKind, handle?: string): void;
@@ -575,7 +575,7 @@ export class LiveTalk {
     // of its own: measured on 3.8, the only order in which it was looked at.
     if (photoB64) {
       ws.send(JSON.stringify({ realtimeInput: { video: { mimeType: 'image/jpeg', data: photoB64 } } }));
-      this.ev.note?.('Shared one photo from the camera with Gemini.');
+      this.ev.note?.('Shared one photo from the camera with Gemini:', `data:image/jpeg;base64,${photoB64}`);
       await new Promise((r) => setTimeout(r, 600));
       if (ws.readyState === WebSocket.OPEN)
         ws.send(JSON.stringify({ realtimeInput: { text: `(The photo is in your video input now. ${this.asked})` } }));
