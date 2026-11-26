@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { link } from '../ble/link';
 import { BUDDY_NAME, ask, clockLines, command, faceLines, remember, transcribe, type Turn } from '../buddy/brain';
-import { LIVE_FALLBACK, LiveTalk, isQuota, type LiveState } from '../buddy/live';
+import { LIVE_CHAIN, LiveTalk, type LiveState } from '../buddy/live';
 import { Mic } from '../buddy/mic';
 import { MicIcon, WaveformIcon } from '../icons';
 import { IOS, haptic, updateSettings, useSettings } from '../settings';
@@ -11,6 +11,8 @@ interface Msg {
   from: 'you' | 'buddy' | 'note';
   text: string;
   emotion?: string;
+  /** A photo Buddy was shown (a data: URL): what it saw is what you see. */
+  image?: string;
 }
 
 // The conversation outlives the panel: closing it to move the pointer and
@@ -178,34 +180,105 @@ export function BuddyPanel() {
     };
   }, []);
 
-  const toggleTalk = () => {
-    haptic();
-    if (talkRef.current) {
-      talkRef.current.stop();
+  // The chain Talk walks down (buddy/live.ts LIVE_CHAIN), Settings' model
+  // first. A model that fails rests and the next carries on with the
+  // conversation so far (3.8 resumes it outright); a new Talk starts from
+  // the top. Past the last, hold-to-talk is Flash Lite with its own chain.
+  const rest = useRef(new Map<string, number>());
+  const recent = useRef<string[]>([]);
+  const restarts = useRef<number[]>([]);
+  const dropAt = useRef(0);
+  const resume = useRef<{ model: string; handle: string } | null>(null);
+  const audio = useRef<AudioContext>(undefined);
+
+  const startTalk = (carry: boolean) => {
+    const now = Date.now();
+    const model = [...new Set([s.liveModel, ...LIVE_CHAIN])].find((m) => (rest.current.get(m) ?? 0) <= now);
+    if (!model) {
+      setLive('off');
+      add({ from: 'note', text: 'Voice is out of quota on every model for now - hold the mic to talk, or type.' });
       return;
     }
+    if (!carry) {
+      recent.current = [];
+      resume.current = null;
+    }
+    const handle = carry && resume.current?.model === model ? resume.current.handle : undefined;
     const t = new LiveTalk(
       (lines) => {
         if (faceUp()) void link.buddy(lines).catch(() => undefined);
       },
       {
         state: setLive,
+        // A face or trick asked for out loud plays as when typed, and the
+        // faces read from Buddy's words hold off until it is done.
+        heard: (you) => {
+          const c = command(you);
+          if (!c) return;
+          t.holdFaces(c.steps.length * 1800 + 2500);
+          play(c.steps);
+        },
+        note: (text, image) => add({ from: 'note', text, image }),
         turn: (you, said, emotion) => {
           if (you) add({ from: 'you', text: you });
           if (said) add({ from: 'buddy', text: said, emotion });
+          if (you) recent.current.push(`Owner: ${you}`);
+          if (said) recent.current.push(`${BUDDY_NAME}: ${said}`);
+          recent.current = recent.current.slice(-12);
         },
-        end: (why) => {
+        end: (why, kind, newHandle) => {
           if (talkRef.current === t) talkRef.current = undefined;
-          setLive('off');
-          if (!why) return;
-          add({ from: 'note', text: why });
-          if (isQuota(why) && s.liveModel !== LIVE_FALLBACK)
-            add({ from: 'note', text: 'Out of voice quota. Settings → Buddy → Voice Model → 2.5 Flash has much more.' });
+          if (newHandle) resume.current = { model, handle: newHandle };
+          // A resume that failed is the handle's fault: tell the next one the
+          // conversation instead, and rest nothing.
+          if (handle && !newHandle && (kind === 'refused' || kind === 'drop')) {
+            resume.current = null;
+            kind = 'goaway';
+          }
+          // Ended on purpose: you, the mic, leaving the tab.
+          if (!kind) {
+            setLive('off');
+            if (why) add({ from: 'note', text: why });
+            return;
+          }
+          const at = Date.now();
+          restarts.current = restarts.current.filter((x) => at - x < 60000);
+          if (restarts.current.length >= 6) {
+            setLive('off');
+            add({ from: 'note', text: 'Gemini keeps failing right now - tap Talk again in a minute.' });
+            return;
+          }
+          restarts.current.push(at);
+          const wait = kind === 'quota' ? 600000 : kind === 'busy' ? 120000 : kind === 'refused' ? 3600000 : 0;
+          if (wait) rest.current.set(model, at + wait);
+          if (kind === 'drop') {
+            if (at - dropAt.current < 60000) rest.current.set(model, at + 120000);
+            dropAt.current = at;
+          }
+          if ((rest.current.get(model) ?? 0) > at) {
+            const what = { quota: 'is out of quota', busy: 'is busy', refused: 'is not available', drop: 'keeps dropping' };
+            add({ from: 'note', text: `${model} ${what[kind as keyof typeof what]} - carrying on with the next.` });
+          }
+          startTalk(true);
         },
       },
+      audio.current,
     );
     talkRef.current = t;
-    void t.start(s.geminiKey, s.liveModel);
+    void t.start(s.geminiKey, model, { handle, recent: handle ? undefined : recent.current });
+  };
+
+  const toggleTalk = () => {
+    haptic();
+    if (talkRef.current) {
+      talkRef.current.stop();
+      return;
+    }
+    // Made in the tap and kept: iOS starts audio only from a gesture, and
+    // the next model or a reconnect comes without one.
+    audio.current ??= new AudioContext();
+    void audio.current.resume().catch(() => undefined);
+    startTalk(false);
   };
 
   const send = async (text = draft) => {
@@ -215,10 +288,17 @@ export function BuddyPanel() {
     if (text === draft) setDraft('');
     add({ from: 'you', text: said });
     // Talking: into the spoken conversation, answered out loud in the same
-    // context, faces and tricks included (Gemini picks the face).
+    // context; a face or trick asked for plays on the dongle as well.
     if (talkRef.current) {
-      if (!talkRef.current.say(said.slice(0, 500)))
+      if (!talkRef.current.say(said.slice(0, 500))) {
         add({ from: 'note', text: 'Still connecting - send it again in a moment.' });
+        return;
+      }
+      const c = command(said);
+      if (c) {
+        talkRef.current.holdFaces(c.steps.length * 1800 + 2500);
+        play(c.steps);
+      }
       return;
     }
     // A face or a trick: acted out at once, no Gemini.
@@ -292,6 +372,7 @@ export function BuddyPanel() {
               </span>
             )}
             {m.text}
+            {m.image && <img className="bubble-photo" src={m.image} alt="What Buddy saw" />}
           </div>
         ))}
         {busy && <div className="bubble buddy thinking">…</div>}

@@ -1,6 +1,21 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { decodeStatus } from '../protocol/packets';
-import { clockLines, command, faceLines, fold, parseReply, remember, requestBody, systemPrompt, type Turn } from './brain';
+import {
+  MODELS,
+  ask,
+  clockLines,
+  command,
+  faceLines,
+  fold,
+  forgetFacts,
+  memories,
+  parseReply,
+  remember,
+  rememberFact,
+  requestBody,
+  systemPrompt,
+  type Turn,
+} from './brain';
 import persona from './persona.json';
 
 const gemini = (obj: unknown) => ({ candidates: [{ content: { parts: [{ text: JSON.stringify(obj) }] } }] });
@@ -77,5 +92,39 @@ describe('Buddy brain', () => {
     expect(decodeStatus(v).features.buddy).toBe(true);
     const old = new DataView(Uint8Array.of(1, 3, 0, 0, 2, 0x3f).buffer);
     expect(decodeStatus(old).features.buddy).toBe(false);
+  });
+});
+
+describe('Buddy memory and models', () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it('remembers a fact once, dated, forgets by a word in it, and prompts with it', () => {
+    const store = new Map<string, string>();
+    vi.stubGlobal('localStorage', {
+      getItem: (k: string) => store.get(k) ?? null,
+      setItem: (k: string, v: string) => store.set(k, v),
+    });
+    const day = new Date(2026, 10, 26);
+    expect(rememberFact('likes pav bhaji', day)).toBe(1);
+    expect(rememberFact('likes pav bhaji', day)).toBe(1);
+    expect(rememberFact('exam on Friday', day)).toBe(2);
+    expect(forgetFacts('EXAM')).toBe(1);
+    expect(memories()).toEqual(['2026-11-26: likes pav bhaji']);
+    expect(systemPrompt(persona, true)).toContain('- 2026-11-26: likes pav bhaji');
+    expect(forgetFacts('everything')).toBe(1);
+    expect(memories()).toEqual([]);
+  });
+
+  it('asks the next Flash Lite model when one is busy or out of quota', async () => {
+    const asked: string[] = [];
+    const answer = gemini({ emotion: 'HAPPY', line: 'HI!', reply: 'Hi!' });
+    vi.stubGlobal('fetch', async (url: string) => {
+      asked.push(url);
+      const n = asked.length;
+      return { ok: n === 3, status: n === 1 ? 503 : n === 2 ? 429 : 200, json: async () => answer };
+    });
+    const a = await ask('k', [], 'hello');
+    expect(a.reply).toBe('Hi!');
+    expect(asked.map((u) => u.split('/models/')[1].split(':')[0])).toEqual(MODELS);
   });
 });

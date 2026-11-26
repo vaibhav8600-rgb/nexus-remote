@@ -39,16 +39,26 @@ above it - so autocorrect, swipe typing and dictation all work.
 - **Talk out loud with Buddy**: tap **Talk** in the Buddy tab for a live spoken
   conversation through Gemini Live, and tap **End** to stop. Buddy answers in a
   real voice through the phone speaker. The dongle shows the listening face
-  while you speak, then the emotion Gemini picks, and the mouth moves with the
-  speech. The phone's echo cancellation keeps the mic open, so you can cut in
+  while you speak, then follows the feeling in Buddy's words (a laugh is happy,
+  "sorry" sad), and the mouth moves with the speech. Faces and tricks asked for
+  out loud ("show me an angry face", "sing a song") play as when typed, and
+  Buddy plays along. Ask it the weather (Open-Meteo, for the phone's location),
+  to remember something (kept on this phone, in every prompt after), or to look
+  at something (one photo from the back camera, only when you ask, and noted in
+  the chat). The phone's echo cancellation keeps the mic open, so you can cut in
   mid-sentence. The transcript appears in the chat. A message typed while
   talking joins the conversation and is answered out loud; end the talk for a
   written answer instead. The voice is soft and calm (`Achernar`). The audio goes from the
   phone straight to Google. A browser cannot put the key in a WebSocket
   header, so it goes in the URL, over TLS. It ends when you leave the tab or the
-  app, and Gemini ends a session after about 15 minutes; tap Talk again. It
-  uses `gemini-3.8-live`. If that runs out of quota, **Settings → Buddy → Voice
-  Model → 2.5 Flash** has far more, and the app suggests it. Without a dongle
+  app. When Google closes a session (every 10-15 minutes) it reconnects by
+  itself, and 3.8 picks the conversation up where it was. It starts with
+  Settings → Buddy → Voice Model (`gemini-3.8-live`); out of quota, busy or
+  gone, it carries on with `gemini-3.1-flash-live-preview`, then
+  `gemini-2.5-flash-native-audio-preview-12-2025`, and says so - and chat and
+  hold-to-talk try `gemini-3.1-flash-lite`, `gemini-3.5-flash-lite` and
+  `gemini-flash-lite-latest` in turn. A reply is held 120 ms before it plays,
+  so a late chunk leaves no gap. Without a dongle
   it is voice only. On iPhone, the silent switch can mute web audio. The app
   asks for a session that records and plays, which is not muted, where
   the browser supports that. If you hear nothing, turn the silent switch off.
