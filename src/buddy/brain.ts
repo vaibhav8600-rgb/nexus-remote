@@ -5,6 +5,45 @@
 import persona from './persona.json';
 
 export const MODEL = 'gemini-3.1-flash-lite';
+/** Asked in turn when one is busy, out of quota or gone - so chat and
+ *  hold-to-talk keep answering (the PC companion uses the same chain). */
+export const MODELS = [MODEL, 'gemini-3.5-flash-lite', 'gemini-flash-lite-latest'];
+
+/** What Buddy was asked to remember (Talk's remember tool), on this phone
+ *  only, and put into every prompt. */
+const MEMORY_KEY = 'nexus.buddy.memory';
+export const MEMORY_MAX = 60;
+
+export function memories(): string[] {
+  try {
+    const m = JSON.parse(localStorage.getItem(MEMORY_KEY) ?? '[]') as unknown;
+    return Array.isArray(m) ? m.filter((x): x is string => typeof x === 'string') : [];
+  } catch {
+    return [];
+  }
+}
+
+/** Kept dated, the same fact once, the oldest dropped past MEMORY_MAX. */
+export function rememberFact(fact: string, now = new Date()): number {
+  const f = fact.replace(/\s+/g, ' ').trim().slice(0, 200);
+  if (!f) return 0;
+  const day = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  const all = memories().filter((m) => !m.toLowerCase().endsWith(`: ${f.toLowerCase()}`));
+  all.push(`${day}: ${f}`);
+  const kept = all.slice(-MEMORY_MAX);
+  localStorage.setItem(MEMORY_KEY, JSON.stringify(kept));
+  return kept.length;
+}
+
+/** Every fact mentioning it - or all, for "everything". How many went. */
+export function forgetFacts(about: string): number {
+  const a = about.trim().toLowerCase();
+  if (!a) return 0;
+  const all = memories();
+  const kept = a === 'everything' || a === 'all' ? [] : all.filter((m) => !m.toLowerCase().includes(a));
+  localStorage.setItem(MEMORY_KEY, JSON.stringify(kept));
+  return all.length - kept.length;
+}
 export const LINE_MAX = 24; // the persona's limit, and what the bubble fits
 const HISTORY = 12; // turns Gemini is shown, six each way
 const REPLY_MAX = 400;
@@ -28,10 +67,11 @@ export const fold = (text: string) =>
     .slice(0, LINE_MAX);
 
 /** Gemini's instructions. @p spoken is for Gemini Live, which talks rather
- *  than writing lines, and sets the face with set_face instead of a JSON field. */
-export function systemPrompt(p: Persona = persona, spoken = false): string {
+ *  than writing lines; its face is read from its words (live.ts faceFor). */
+export function systemPrompt(p: Persona = persona, spoken = false, mem: string[] = memories()): string {
   const v = p.voice;
   const owner = p.owner || 'the owner';
+  const faces = p.emotions.filter((e) => e !== 'listening').join(', ');
   return [
     `You are ${p.name}, a tiny animated face on ${owner}'s keyboard dongle. Pronoun: ${p.pronoun}.`,
     'Traits:',
@@ -41,9 +81,21 @@ export function systemPrompt(p: Persona = persona, spoken = false): string {
       : `Voice: ${v.style}. A line is at most ${v.max_chars} characters, ${v.case} case, ${v.charset}.`,
     'Never:',
     ...p.never.map((n) => `- ${n}`),
-    spoken
-      ? 'Call set_face at the start of every reply with the face that fits it, then speak.'
-      : 'Reply only as JSON matching the schema: "emotion" is how the face looks, "line" goes on the dongle, "reply" is what you say on a screen - when the owner talks to you, a real answer in normal sentence case, at most 200 characters.',
+    ...(mem.length
+      ? [`What ${owner} asked you to remember on earlier days (use it naturally, do not recite it):`, ...mem.map((m) => `- ${m}`)]
+      : []),
+    ...(spoken
+      ? [
+          'Let your feelings show in your words - laugh, say aww or hmm - since your face follows what you say.',
+          // Left unsaid, Gemini answered "I don't know how to be angry!" over
+          // an angry face the app had just played.
+          `When ${owner} asks for a face (${faces}) or a trick (sing, dance, high five, hands up, bang, thumbs up, ` +
+            "play a game, good night), your face really does it on the dongle by itself. Play along in that mood in a " +
+            "few words - an angry face gets 'Grrr! So mad!' - and never say you can't.",
+        ]
+      : [
+          'Reply only as JSON matching the schema: "emotion" is how the face looks, "line" goes on the dongle, "reply" is what you say on a screen - when the owner talks to you, a real answer in normal sentence case, at most 200 characters.',
+        ]),
   ].join('\n');
 }
 
@@ -140,22 +192,30 @@ export function command(text: string, p = persona): Command | null {
   return null;
 }
 
-/** One generateContent call. Throws an Error whose message is fit to show. */
-async function post(key: string, body: unknown): Promise<unknown> {
-  let res: Response;
-  try {
-    res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
-      body: JSON.stringify(body),
-    });
-  } catch {
-    throw new Error('No internet - Gemini could not be reached.');
+/** One generateContent call, down MODELS until one answers: busy (5xx), out
+ *  of quota (429) or gone (404) moves on; a refused key does not, since it
+ *  fails the same everywhere. Throws an Error whose message is fit to show. */
+async function post(key: string, body: unknown, models = MODELS): Promise<unknown> {
+  let last = new Error('Gemini could not be reached.');
+  for (const model of models) {
+    let res: Response;
+    try {
+      res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
+        body: JSON.stringify(body),
+      });
+    } catch {
+      throw new Error('No internet - Gemini could not be reached.');
+    }
+    if (res.ok) return res.json().catch(() => null);
+    if (res.status === 400 || res.status === 403) throw new Error('Gemini refused the key. Check it in Settings → Buddy.');
+    last =
+      res.status === 429
+        ? new Error('Out of Gemini quota on every model for now. Try again in a few minutes.')
+        : new Error(`Gemini is busy on every model (HTTP ${res.status}). Try again in a minute.`);
   }
-  if (res.status === 429) throw new Error('Out of Gemini quota for now. Try again in a few minutes.');
-  if (res.status === 400 || res.status === 403) throw new Error('Gemini refused the key. Check it in Settings → Buddy.');
-  if (!res.ok) throw new Error(`Gemini answered HTTP ${res.status}.`);
-  return res.json().catch(() => null);
+  throw last;
 }
 
 /** Ask Gemini. Throws an Error whose message is fit to show. */
